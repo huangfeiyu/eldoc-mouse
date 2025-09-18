@@ -43,8 +43,8 @@ POS is the buffer position under the mouse cursor."
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
     (save-excursion
       (add-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function nil t)
-      (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
       (goto-char pos)
+      (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
       (when (thing-at-point 'symbol)
         (eldoc-print-current-symbol-info))
       (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t))))
