@@ -49,7 +49,7 @@ Contributing
 
 ## Contribution
 Feel free to open issues and pull requests for improvements. If you encounter any bugs or have feature requests, please create an issue on the GitHub Issues page.
-Acknowledgments
+## Acknowledgments
 
     eldoc-box: for providing popup documentation frames.
     eglot: for offering Language Server Protocol (LSP) support in Emacs.
