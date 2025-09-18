@@ -10,21 +10,7 @@
 
 ## Installation
 
-To install `eldoc-mouse`, you need to have `eldoc-box` and `eglot` installed. You can install the package from MELPA:
-
-1. Add MELPA to your package archives if you haven't already:
-    ```elisp
-    (require 'package)
-    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-    (package-initialize)
-    ```
-
-2. Install `eldoc-mouse` from MELPA:
-    ```elisp
-    M-x package-install RET eldoc-mouse RET
-    ```
-
-Alternatively, if you want to install the package manually, you can clone this repository and load it into your Emacs configuration:
+Clone this repository and load it into your Emacs configuration:
 
 ```sh
 git clone https://github.com/huangfeiyu/eldoc-mouse.git
