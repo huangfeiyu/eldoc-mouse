@@ -1,6 +1,7 @@
 # eldoc-mouse
 
-`eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a child frame when the mouse hovers over a symbol in an `eglot`-managed buffer. It integrates with `eldoc-box` to provide popup documentation and features a debounced hover mechanism to prevent excessive requests to the LSP server.[Screencast_20250918_110121.webm](https://github.com/user-attachments/assets/6bb80bee-dc2b-4d36-b8a4-4d416e0a6100)
+`eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a child frame when the mouse hovers over a symbol in an `eglot`-managed buffer. It integrates with `eldoc-box` to provide popup documentation and features a debounced hover mechanism to prevent excessive requests to the LSP server.
+[Screencast_20250918_110121.webm](https://github.com/user-attachments/assets/6bb80bee-dc2b-4d36-b8a4-4d416e0a6100)
 
 
 ## Features
