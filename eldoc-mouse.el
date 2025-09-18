@@ -63,19 +63,18 @@ POS is the buffer position under the mouse cursor."
 
 (defun eldoc-mouse-setup ()
   "Set up eldoc-mouse for the current buffer."
-  (when (eglot-managed-p)
-    ;; Enable eldoc-box hover mode
-    (eldoc-box-hover-mode 1)
-    ;; Avoid unnecessary document of signatures that clutters the document.
-    (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
-    ;; Avoid show document for the cursor.
-    (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
-    ;; Enable highlight symbol under the cursor.
-    (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)
-    ;; Enable mouse tracking
-    (setq track-mouse t)
-    ;; Bind mouse movement to documentation display
-    (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse)))
+  ;; Enable eldoc-box hover mode
+  (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
+  ;; Avoid unnecessary document of signatures that clutters the document.
+  (add-hook 'eglot-managed-mode-hook (lambda () (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)))
+  ;; Avoid show document for the cursor.
+  (add-hook 'eglot-managed-mode-hook (lambda () (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)))
+  ;; Enable highlight symbol under the cursor.
+  (add-hook 'eglot-managed-mode-hook (lambda () (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))
+  ;; Enable mouse tracking
+  (setq track-mouse t)
+  ;; Bind mouse movement to documentation display
+  (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
 
 ;;;###autoload
 (defun eldoc-mouse-enable ()
