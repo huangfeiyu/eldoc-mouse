@@ -27,6 +27,17 @@
 (require 'eldoc-box)
 (require 'eglot)
 
+(defgroup eldoc-mouse nil
+  "Dispay document for mouse hover"
+  :prefix "eldoc-mouse-"
+  :group 'eldoc)
+
+(defcustom eldoc-mouse-idle-time 0.2
+  "The minimum amount of seconds that the mouse hover on a symbol before
+   triggering eldoc to get the document of the symbol, default to 0.2 second."
+  :type 'number
+  :group 'eldoc-mouse)
+
 (defvar eldoc-mouse-mouse-timer nil
   "Idle timer for mouse hover eldoc.")
 
@@ -59,20 +70,26 @@ POS is the buffer position under the mouse cursor."
         (cancel-timer eldoc-mouse-mouse-timer))
       (setq eldoc-mouse-mouse-timer
             (run-with-idle-timer
-             0.2 nil #'eldoc-mouse-show-doc-at pos)))))
+             eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at pos)))))
+
+(defun eldoc-mouse-handle-eglot-hooks ()
+  "remove the hooks that display doc on cursor hover, keep highlighting on cursor."
+  ;; Avoid unnecessary document of signatures that clutters the document.
+  (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
+  ;; Avoid show document for the cursor.
+  (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
+  ;; Enable highlight symbol under the cursor.
+  ;; In the future the following line is no longer necessary, as emacs use a specific function eglot-highlight-eldoc-function for highlighting.
+  ;; And here, we want to keep the highlight at cursor.
+  ;; see details: https://cgit.git.savannah.gnu.org/cgit/emacs.git/commit/?id=60166a419f601b413db86ddce186cc387e8ec269
+  (when (fboundp 'eglot--highlight-piggyback)
+    (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))
 
 (defun eldoc-mouse-setup ()
   "Set up eldoc-mouse for the current buffer."
   ;; Enable eldoc-box hover mode
   (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
-  ;; Avoid unnecessary document of signatures that clutters the document.
-  (add-hook 'eglot-managed-mode-hook (lambda () (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)))
-  ;; Avoid show document for the cursor.
-  (add-hook 'eglot-managed-mode-hook (lambda () (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)))
-  ;; Enable highlight symbol under the cursor.
-  (add-hook 'eglot-managed-mode-hook (lambda () (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))
-  ;; Enable mouse tracking
-  (setq track-mouse t)
+  (add-hook 'eglot-managed-mode-hook #'eldoc-mouse-handle-eglot-hooks t)
   ;; Bind mouse movement to documentation display
   (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
 
@@ -80,19 +97,26 @@ POS is the buffer position under the mouse cursor."
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in all `prog-mode' buffers."
   (interactive)
+  ;; Enable mouse tracking
+  (setq track-mouse t)
+  ;; make sure the eldoc-mouse also enabled to the current buffer.
+  (when (eglot-managed-p)
+    (eldoc-box-hover-mode)
+    (eldoc-mouse-handle-eglot-hooks)
+    (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
   (add-hook 'prog-mode-hook #'eldoc-mouse-setup))
 
 ;;;###autoload
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in all `prog-mode' buffers."
   (interactive)
+  (setq track-mouse nil)
   (remove-hook 'prog-mode-hook #'eldoc-mouse-setup)
+  (remove-hook 'eglot-managed-mode-hook #'eldoc-mouse-handle-eglot-hooks)
   (when eldoc-mouse-mouse-timer
     (cancel-timer eldoc-mouse-mouse-timer)
     (setq eldoc-mouse-mouse-timer nil))
   (local-unset-key [mouse-movement]))
-
-(eldoc-mouse-enable)
 
 (provide 'eldoc-mouse)
 
