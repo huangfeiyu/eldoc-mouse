@@ -27,7 +27,11 @@ Then, in your Emacs configuration:
 
 ## Usage
 ### Enable eldoc-mouse:
-Enabled by default, alternatively, run the command:
+Add the following in your Emacs configuration:
+```
+(eldoc-mouse-enable)
+```
+alternatively, run the command interactively:
 ```
 M-X: eldoc-mouse-enable
 ```
