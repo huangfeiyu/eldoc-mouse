@@ -6,10 +6,11 @@
 
 
 ## Features
-- Displays documentation in a child frame when hovering over symbols in `eglot`-managed buffers.
+- Displays documentation in a child frame when hovering over symbols in `eglot` managed buffers.
 - Integrates with `eldoc-box` for popup documentation.
 - Avoids spamming the LSP server by debouncing hover events.
 - Works in `prog-mode` buffers to show documentation for the symbol under the mouse cursor.
+- Removed the unnecessary signatures from the document to make doucment more clear.
 
 ## Installation
 
