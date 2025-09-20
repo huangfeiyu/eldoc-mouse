@@ -1,13 +1,13 @@
 # eldoc-mouse
 
-`eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a child frame when the mouse hovers over a symbol in an `eglot` managed buffer. It integrates with `eldoc-box` to provide popup documentation and features a debounced hover mechanism to prevent excessive requests to the LSP server.
+`eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a child frame at the mouse point using [posframe](https://github.com/tumashu/posframe) when the mouse hovers over a symbol in an `eglot` managed buffer. It integrates with `posframe` to provide popup documentation and features a debounced hover mechanism to prevent excessive requests to the LSP server.
 ![Screencast_20250918_110121.webm](https://github.com/user-attachments/assets/6bb80bee-dc2b-4d36-b8a4-4d416e0a6100)
 ![](https://github.com/user-attachments/assets/e2d32b35-7da0-4bfc-8043-c3cdc6d530a1)
 
 
 ## Features
 - Displays documentation in a child frame when hovering over symbols in `eglot` managed buffers.
-- Integrates with `eldoc-box` for popup documentation.
+- Integrates with `posframe` for popup documentation.
 - Avoids spamming the LSP server by debouncing hover events.
 - Works in `prog-mode` buffers to show documentation for the symbol under the mouse cursor.
 - Removed the unnecessary signatures from the document to make doucment more clear.
@@ -47,7 +47,7 @@ You can customize the behavior of eldoc-mouse by adjusting the variables or addi
 ## Requirements
 
     Emacs 30.1 or higher
-    eldoc-box version 2.1.1 or higher
+    posframe version 1.4.0 or higher
     eglot version 1.8 or higher
 
 ## License
@@ -59,7 +59,7 @@ Contributing
 Feel free to open issues and pull requests for improvements. If you encounter any bugs or have feature requests, please create an issue on the GitHub Issues page.
 ## Acknowledgments
 
-    eldoc-box: for providing popup documentation frames.
+    posframe: for popup document in beautiful child frame. 
     eglot: for offering Language Server Protocol (LSP) support in Emacs.
     Emacs: for being an amazing, extensible text editor.
 
