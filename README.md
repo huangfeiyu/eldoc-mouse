@@ -10,8 +10,9 @@
 - Displays documentation in a child frame when hovering over symbols in `eglot` managed buffers.
 - Integrates with `posframe` for popup documentation.
 - Avoids spamming the LSP server by debouncing hover events.
-- Works in `prog-mode` buffers to show documentation for the symbol under the mouse cursor.
+- Works in `prog-mode` buffers to show documentation for the symbol under the mouse point.
 - Removed the unnecessary signatures from the document to make doucment more clear.
+- Still keep highlighting the symbol under the cursor.
 
 ## Installation
 
@@ -60,6 +61,8 @@ Contributing
 Feel free to open issues and pull requests for improvements. If you encounter any bugs or have feature requests, please create an issue on the GitHub Issues page.
 ## Acknowledgments
 
+    lsp-ui: inspiration, the most mouse friendly tool in Emacs.
+    eldoc-box: inspiration, the first package for display eglot-eldoc-document to a child frame.
     posframe: for popup document in beautiful child frame. 
     eglot: for offering Language Server Protocol (LSP) support in Emacs.
     Emacs: for being an amazing, extensible text editor.
