@@ -26,6 +26,7 @@
 (require 'eldoc)
 (require 'posframe)
 (require 'eglot)
+(require 'cl-lib)
 
 (defgroup eldoc-mouse nil
   "Dispay document for mouse hover"
@@ -56,6 +57,9 @@
 (defvar eldoc-mouse-mouse-timer nil
   "Idle timer for mouse hover eldoc.")
 
+(defvar-local eldoc-mouse-mouse-overlay nil
+  "The overlay for the symbol under the mouse.")
+
 (defvar-local eldoc-mouse-last-symbol-bounds nil
   "Bounds of the last symbol processed for eldoc.")
 
@@ -69,13 +73,21 @@ POS is the buffer position under the mouse cursor."
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
     (posframe-hide eldoc-mouse-posframe-buffer-name)
+    (when (fboundp 'eglot--highlight-piggyback)
+      (remove-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback t))
+    (when eldoc-mouse-mouse-overlay
+      (delete-overlay eldoc-mouse-mouse-overlay))
     (save-excursion
-      (add-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function nil t)
+      (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
       (goto-char pos)
       (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
       (when (thing-at-point 'symbol)
-        (eldoc-print-current-symbol-info))
-      (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t))))
+        (eldoc-print-current-symbol-info)
+        (setq-local eldoc-mouse-mouse-overlay (make-overlay (car eldoc-mouse-last-symbol-bounds) (cdr eldoc-mouse-last-symbol-bounds)))
+        (overlay-put eldoc-mouse-mouse-overlay 'face 'highlight))
+      (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t)
+      (when (fboundp 'eglot--highlight-piggyback)
+        (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))))
 
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
@@ -88,6 +100,13 @@ POS is the buffer position under the mouse cursor."
       (setq eldoc-mouse-mouse-timer
             (run-with-idle-timer
              eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at pos)))))
+
+(defun eldoc-mouse-hover-eldoc-function (cb)
+  "Modify the `eglot-hover-eldoc-function', so it won't call `eglot--highlight-piggyback'"
+  (if (fboundp 'eglot--highlight-piggyback)
+      (cl-letf (((symbol-function 'eglot--highlight-piggyback) (lambda (&rest args) (message ""))))
+        (eglot-hover-eldoc-function cb))
+    (eglot-hover-eldoc-function cb)))
 
 (defun eldoc-mouse-handle-eglot-hooks ()
   (setq-local eldoc-display-functions (list #'eldoc-display-in-buffer #'eldoc-mouse-display-in-posframe))
