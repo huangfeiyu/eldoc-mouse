@@ -1,14 +1,30 @@
-;;; eldoc-mouse.el --- Display eldoc documentation on mouse hover -- lexical-binding: t; --
+;;; eldoc-mouse.el --- Display documentation for mouse hover -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025 Huang Feiyu
 
 ;; Author: Huang Feiyu sibadake1@163.com
 ;; Version: 0.1
-;; Package-Requires: ((emacs "30.1") (eldoc-box "2.1.1") (eglot "1.8"))
+;; Package-Requires: ((emacs "30.1") (posframe "1.4.0") (eglot "1.8"))
 ;; Keywords: tools, languages, convenience, emacs, mouse, hover
 ;; URL: https://github.com/huangfeiyu/eldoc-mouse
-;; License: GPL-3.0-or-later
-
+;;
+;; This file is part of eldoc-mouse.
+;;
+;; eldoc-mouse is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License
+;; as published by the Free Software Foundation, either version 3
+;; of the License, or (at your option) any later version.
+;;
+;; eldoc-mouse is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with eldoc-mouse; if not, see <http://www.gnu.org/licenses/>.
+;;
+;; SPDX-License-Identifier: GPL-3.0-or-later
+;;
 ;;; Commentary:
 
 ;; This package enhances eldoc' by displaying documentation in a child frame
@@ -17,7 +33,7 @@
 ;; mechanism to avoid spamming the LSP server. Enable it in prog-mode' buffers
 ;; to show documentation for the symbol under the mouse cursor.
 
-;; To use, ensure eldoc-box are installed, then add:
+;; To use, ensure posframe is installed, then add:
 ;; (require 'eldoc-mouse)
 ;; to your Emacs configuration.
 
@@ -29,12 +45,13 @@
 (require 'cl-lib)
 
 (defgroup eldoc-mouse nil
-  "Dispay document for mouse hover"
+  "Dispay document for mouse hover."
   :prefix "eldoc-mouse-"
   :group 'eldoc)
 
 (defcustom eldoc-mouse-idle-time 0.2
-  "The minimum amount of seconds that the mouse hover on a symbol before
+  "The minimum amount of seconds.
+ that the mouse hover on a symbol before
    triggering eldoc to get the document of the symbol, default to 0.2 second."
   :type 'number
   :group 'eldoc-mouse)
@@ -68,8 +85,8 @@
 POS is the buffer position under the mouse cursor."
   (when (and pos
              (number-or-marker-p pos)
-             (not (eldoc-mouse-is-mouse-hovering-posframe? eldoc-mouse-posframe-buffer-name pos))
-             (or (eq eldoc-mouse-last-symbol-bounds nil)
+             (not (eldoc-mouse-is-mouse-hovering-posframe? eldoc-mouse-posframe-buffer-name))
+             (or (null eq eldoc-mouse-last-symbol-bounds)
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
     (posframe-hide eldoc-mouse-posframe-buffer-name)
@@ -102,7 +119,7 @@ POS is the buffer position under the mouse cursor."
              eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at pos)))))
 
 (defun eldoc-mouse-hover-eldoc-function (cb)
-  "Modify the `eglot-hover-eldoc-function', so it won't call `eglot--highlight-piggyback'"
+  "Modify the `eglot-hover-eldoc-function', so it won't call `eglot--highlight-piggyback', `CB'."
   (if (fboundp 'eglot--highlight-piggyback)
       (cl-letf (((symbol-function 'eglot--highlight-piggyback) (lambda (&rest args) (message ""))))
         (eglot-hover-eldoc-function cb))
@@ -122,35 +139,21 @@ POS is the buffer position under the mouse cursor."
   (when (fboundp 'eglot--highlight-piggyback)
     (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))
 
-(defun eldoc-mouse-is-mouse-hovering-posframe? (posframe-name pos)
-  "Check if the mouse is hovering over the given posframe."
+(defun eldoc-mouse-is-mouse-hovering-posframe? (posframe-name)
+  "Check if the mouse is hovering over the given posframe `POSFRAME-NAME'."
   (let* ((posframe (get-buffer posframe-name))   ;; Get the posframe buffer
-         (frame (get-buffer-window posframe))
-         (posframe-params (and posframe (frame-parameters frame))))
-    (if posframe-params
-        (let* ((posframe-x (plist-get posframe-params :left))
-               (posframe-y (plist-get posframe-params :top))
-               (posframe-width (plist-get posframe-params :width))
-               (mouse-pos (window-absolute-pixel-position pos))
-               (posframe-height (plist-get posframe-params :height)))  ;; Get the mouse position
-          (and mouse-pos
-               posframe-x
-               posframe-y
-               posframe-width
-               posframe-height
-               (>= (car mouse-pos) posframe-x)
-               (< (car mouse-pos) (+ posframe-x posframe-width))
-               (>= (cdr mouse-pos) posframe-y)
-               (< (cdr mouse-pos) (+ posframe-y posframe-height))))
+         (frame (get-buffer-window posframe)))
+    ;; keep the child frame when it is clicked, need a better way to determine if the mouse is overing the child frame.
+    (if (and posframe (windowp frame))
+        t
       nil)))
 
 (defun eldoc-mouse-display-in-posframe (docs interactive)
-  "Display STRING in a posframe at the current mouse position."
+  "Display `DOCS' STRING in a posframe at the current mouse position."
   (when docs
     ;; output the document for *eldoc* buffer
     (eldoc--format-doc-buffer docs)
-    (let* ((eldoc-buffer (get-buffer (car (seq-filter (lambda (buf) (string-match-p ".*\\*eldoc.*\\*" (buffer-name buf))) (buffer-list)))))
-           (frame (selected-frame)))
+    (let* ((eldoc-buffer (get-buffer (car (seq-filter (lambda (buf) (string-match-p ".*\\*eldoc.*\\*" (buffer-name buf))) (buffer-list))))))
       (when eldoc-buffer
         (let ((text (with-current-buffer eldoc-buffer
                       (buffer-string)))
@@ -170,8 +173,6 @@ POS is the buffer position under the mouse cursor."
 
 (defun eldoc-mouse-setup ()
   "Set up eldoc-mouse for the current buffer."
-  ;; Enable eldoc-box hover mode
-  ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
   (add-hook 'eglot-managed-mode-hook #'eldoc-mouse-handle-eglot-hooks t)
   ;; Bind mouse movement to documentation display
   (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
