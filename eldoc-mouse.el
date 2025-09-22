@@ -28,9 +28,9 @@
 ;;; Commentary:
 
 ;; This package enhances eldoc' by displaying documentation in a child frame
-;; when the mouse hovers over a symbol in eglot'-managed buffers. It integrates
+;; when the mouse hovers over a symbol in eglot'-managed buffers.  It integrates
 ;; with posframe' for popup documentation and provides a debounced mouse hover
-;; mechanism to avoid spamming the LSP server. Enable it in prog-mode' buffers
+;; mechanism to avoid spamming the LSP server.  Enable it in prog-mode' buffers
 ;; to show documentation for the symbol under the mouse cursor.
 
 ;; To use, ensure posframe is installed, then add:
@@ -51,7 +51,7 @@
 
 (defcustom eldoc-mouse-idle-time 0.2
   "The minimum amount of seconds.
- that the mouse hover on a symbol before
+that the mouse hover on a symbol before
    triggering eldoc to get the document of the symbol, default to 0.2 second."
   :type 'number
   :group 'eldoc-mouse)
@@ -126,6 +126,8 @@ POS is the buffer position under the mouse cursor."
     (eglot-hover-eldoc-function cb)))
 
 (defun eldoc-mouse-handle-eglot-hooks ()
+  "Handle the eldoc eglot hooks.
+Remove all eglot hooks and add highlight hook, add eldoc-mouse's `eldoc-display-functions'."
   (setq-local eldoc-display-functions (list #'eldoc-display-in-buffer #'eldoc-mouse-display-in-posframe))
   "remove the hooks that display doc on cursor hover, keep highlighting on cursor."
   ;; Avoid unnecessary document of signatures that clutters the document.
@@ -149,7 +151,8 @@ POS is the buffer position under the mouse cursor."
       nil)))
 
 (defun eldoc-mouse-display-in-posframe (docs interactive)
-  "Display `DOCS' STRING in a posframe at the current mouse position."
+  "Display `DOCS' STRING in a posframe at the current mouse position.
+Argument INTERACTIVE the argument used by eldoc."
   (when docs
     ;; output the document for *eldoc* buffer
     (eldoc--format-doc-buffer docs)
