@@ -122,22 +122,6 @@ POS is the buffer position under the mouse cursor."
   (when (fboundp 'eglot--highlight-piggyback)
     (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))
 
-(defun eldoc-mouse-calc-posframe-width (max-width &optional frame)
-  "Compute a posframe width (in pixels)
-Return a number <pixels>.
-- The width won't exceed the width of the parent frame.
-- The function will respect the `max-width` to prevent exceeding it."
-  (let* ((frame (or frame (selected-frame)))
-         ;; Parent frame capacity in character cells:
-         (parent-cols (max 1 (- (frame-width frame) 1)))
-         (max-cols (or max-width most-positive-fixnum))
-         ;; Clamp to parent frame (in chars)
-         (final-cols (max 1 (min max-cols parent-cols)))
-         ;; Convert from character cells to pixels
-         (cw (+ 1 (frame-char-width frame))))  ;; character width in pixels
-    ;; Return the size in pixels
-    (* final-cols cw)))
-
 (defun eldoc-mouse-is-mouse-hovering-posframe? (posframe-name pos)
   "Check if the mouse is hovering over the given posframe."
   (let* ((posframe (get-buffer posframe-name))   ;; Get the posframe buffer
@@ -166,19 +150,16 @@ Return a number <pixels>.
     ;; output the document for *eldoc* buffer
     (eldoc--format-doc-buffer docs)
     (let* ((eldoc-buffer (get-buffer (car (seq-filter (lambda (buf) (string-match-p ".*\\*eldoc.*\\*" (buffer-name buf))) (buffer-list)))))
-           (xy (window-absolute-pixel-position (car eldoc-mouse-last-symbol-bounds)))
-           (frame (selected-frame))
-           (posframe-width-pixel (eldoc-mouse-calc-posframe-width eldoc-mouse-posframe-max-width))
-           (posframe-xy (cons (min (car xy) (- (frame-pixel-width frame) posframe-width-pixel))
-                              (cdr xy))))
+           (frame (selected-frame)))
       (when eldoc-buffer
         (let ((text (with-current-buffer eldoc-buffer
                       (buffer-string)))
               (border-color (face-foreground 'default)))
           (when text
             (posframe-show eldoc-mouse-posframe-buffer-name
-                           :position posframe-xy
-                           :width (/ posframe-width-pixel (frame-char-width frame))
+                           :position (car eldoc-mouse-last-symbol-bounds)
+                           :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
+                           :max-width eldoc-mouse-posframe-max-width
                            :min-height eldoc-mouse-posframe-min-height
                            :border-width 1
                            :border-color border-color
