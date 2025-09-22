@@ -86,7 +86,7 @@ POS is the buffer position under the mouse cursor."
   (when (and pos
              (number-or-marker-p pos)
              (not (eldoc-mouse-is-mouse-hovering-posframe? eldoc-mouse-posframe-buffer-name))
-             (or (null eq eldoc-mouse-last-symbol-bounds)
+             (or (null eldoc-mouse-last-symbol-bounds)
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
     (posframe-hide eldoc-mouse-posframe-buffer-name)
