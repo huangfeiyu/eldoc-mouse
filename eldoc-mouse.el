@@ -49,7 +49,7 @@
   :prefix "eldoc-mouse-"
   :group 'eldoc)
 
-(defcustom eldoc-mouse-idle-time 0.2
+(defcustom eldoc-mouse-idle-time 0.4
   "The minimum amount of seconds.
 that the mouse hover on a symbol before
    triggering eldoc to get the document of the symbol, default to 0.2 second."
@@ -80,6 +80,10 @@ that the mouse hover on a symbol before
 (defvar-local eldoc-mouse-last-symbol-bounds nil
   "Bounds of the last symbol processed for eldoc.")
 
+(defvar-local eldoc-mouse-unsupress-posframe nil
+  "Temporarily unsupress the posframe.
+By default, posframe will not used by eldoc.")
+
 (defun eldoc-mouse-show-doc-at (pos)
   "Ask eldoc to show documentation for symbol at POS.
 POS is the buffer position under the mouse cursor."
@@ -89,7 +93,7 @@ POS is the buffer position under the mouse cursor."
              (or (null eldoc-mouse-last-symbol-bounds)
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
-    (posframe-hide eldoc-mouse-posframe-buffer-name)
+    (eldoc-mouse--hide-posframe)
     (when (fboundp 'eglot--highlight-piggyback)
       (remove-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback t))
     (when eldoc-mouse-mouse-overlay
@@ -99,12 +103,17 @@ POS is the buffer position under the mouse cursor."
       (goto-char pos)
       (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
       (when (thing-at-point 'symbol)
+        (setq-local eldoc-mouse-unsupress-posframe t)
         (eldoc-print-current-symbol-info)
         (setq-local eldoc-mouse-mouse-overlay (make-overlay (car eldoc-mouse-last-symbol-bounds) (cdr eldoc-mouse-last-symbol-bounds)))
         (overlay-put eldoc-mouse-mouse-overlay 'face 'highlight))
       (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t)
       (when (fboundp 'eglot--highlight-piggyback)
         (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))))
+
+(defun eldoc-mouse--hide-posframe ()
+  "Hide the posframe."
+  (posframe-hide eldoc-mouse-posframe-buffer-name))
 
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
@@ -128,7 +137,7 @@ POS is the buffer position under the mouse cursor."
 (defun eldoc-mouse-handle-eglot-hooks ()
   "Handle the eldoc eglot hooks.
 Remove all eglot hooks and add highlight hook, add eldoc-mouse's `eldoc-display-functions'."
-  (setq-local eldoc-display-functions (list #'eldoc-display-in-buffer #'eldoc-mouse-display-in-posframe))
+  (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
   "remove the hooks that display doc on cursor hover, keep highlighting on cursor."
   ;; Avoid unnecessary document of signatures that clutters the document.
   (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
@@ -153,9 +162,10 @@ Remove all eglot hooks and add highlight hook, add eldoc-mouse's `eldoc-display-
 (defun eldoc-mouse-display-in-posframe (docs interactive)
   "Display `DOCS' STRING in a posframe at the current mouse position.
 Argument INTERACTIVE the argument used by eldoc."
-  (when docs
+  (when (and docs eldoc-mouse-unsupress-posframe)
+    (setq-local eldoc-mouse-unsupress-posframe nil)
     ;; output the document for *eldoc* buffer
-    (eldoc--format-doc-buffer docs)
+    ;; (eldoc--format-doc-buffer docs)
     (let* ((eldoc-buffer (get-buffer (car (seq-filter (lambda (buf) (string-match-p ".*\\*eldoc.*\\*" (buffer-name buf))) (buffer-list))))))
       (when eldoc-buffer
         (let ((text (with-current-buffer eldoc-buffer
@@ -189,6 +199,8 @@ Argument INTERACTIVE the argument used by eldoc."
   ;; Enable mouse tracking
   (setq track-mouse t)
 
+  (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
+
   ;; (add-to-list 'eldoc-display-functions #'eldoc-mouse-display-in-posframe)
   ;; make sure the eldoc-mouse also enabled to the current buffer.
   (when (eglot-managed-p)
@@ -202,6 +214,7 @@ Argument INTERACTIVE the argument used by eldoc."
   "Disable eldoc-mouse in all `prog-mode' buffers."
   (interactive)
   (setq track-mouse nil)
+  (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe)
   (remove-hook 'prog-mode-hook #'eldoc-mouse-setup)
   (remove-hook 'eglot-managed-mode-hook #'eldoc-mouse-handle-eglot-hooks)
   (when eldoc-mouse-mouse-timer
