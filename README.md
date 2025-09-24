@@ -7,6 +7,8 @@
 ## Features
 - Displays documentation in a child frame when hovering over symbols in `eglot` managed buffers.
 - Integrates with `posframe` for popup documentation.
+- Support moving mouse to the popup by move mouse on it and click.
+- Automatically hide the popup when mouse moved away from the symbol, also supoort pressing `C-g` to hide the popup.
 - Avoids spamming the LSP server by debouncing hover events.
 - Works in `prog-mode` buffers to show documentation for the symbol under the mouse point.
 - Removed the unnecessary signatures from the document to make doucment more clear.
