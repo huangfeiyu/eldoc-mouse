@@ -66,6 +66,13 @@ that the mouse hover on a symbol before
   :type 'number
   :group 'eldoc-mouse)
 
+(defcustom eldoc-mouse-posframe-max-height 8
+  "The maximum number of lines posframe may contain.
+It could be nil, means no limit, in practical, I found that set this too big or
+no limit, the popup may affect writing."
+  :type 'number
+  :group 'eldoc-mouse)
+
 (defcustom eldoc-mouse-posframe-buffer-name "*doc-posframe-buffer*"
   "The name of the hidden buffer used by posframe."
   :type 'string
@@ -177,6 +184,7 @@ Argument INTERACTIVE the argument used by eldoc."
                            :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
                            :max-width eldoc-mouse-posframe-max-width
                            :min-height eldoc-mouse-posframe-min-height
+                           :max-height eldoc-mouse-posframe-max-height
                            :border-width 1
                            :border-color border-color
                            :string text))))
