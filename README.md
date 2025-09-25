@@ -2,7 +2,7 @@
 
 `eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a child frame at the mouse point using [posframe](https://github.com/tumashu/posframe) when the mouse hovers over a symbol in an `eglot` managed buffer. It integrates with `posframe` to provide popup documentation and features a debounced hover mechanism to prevent excessive requests to the LSP server.
 [Eldoc-mouse Demo at Youtube](https://youtu.be/XFAc4WyiJjI)
-
+<video src="https://github.com/user-attachments/assets/5622cfd2-de0c-46e8-9276-d67615671932" controls></video>
 
 ## Features
 - Displays documentation in a child frame when hovering over symbols in `eglot` managed buffers.
