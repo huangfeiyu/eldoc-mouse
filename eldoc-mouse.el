@@ -109,7 +109,7 @@ POS is the buffer position under the mouse cursor."
       (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
       (goto-char pos)
       (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
-      (when (thing-at-point 'symbol)
+      (when (and (not (eolp)) (thing-at-point 'symbol))
         (setq-local eldoc-mouse-unsupress-posframe t)
         (eldoc-print-current-symbol-info)
         (setq-local eldoc-mouse-mouse-overlay (make-overlay (car eldoc-mouse-last-symbol-bounds) (cdr eldoc-mouse-last-symbol-bounds)))
