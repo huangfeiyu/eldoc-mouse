@@ -32,16 +32,7 @@ Then, in your Emacs configuration:
 ### Enable eldoc-mouse:
 Add the following in your Emacs configuration:
 ```
-(eldoc-mouse-enable)
-```
-alternatively, run the command interactively:
-```
-M-X: eldoc-mouse-enable
-```
-### Disable eldoc-mouse:
-If you want to disable eldoc-mouse, you can do so with:
-```
-M-X: eldoc-mouse-disable
+(add-hook 'eglot-managed-mode-hook #'eldoc-mouse-mode t)
 ```
 ## Customization
 
