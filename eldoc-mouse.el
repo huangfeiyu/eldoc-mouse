@@ -66,7 +66,7 @@ that the mouse hover on a symbol before
   :type 'number
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-max-height 8
+(defcustom eldoc-mouse-posframe-max-height 15
   "The maximum number of lines posframe may contain.
 It could be nil, means no limit, in practical, I found that set this too big or
 no limit, the popup may affect writing."
@@ -90,6 +90,9 @@ no limit, the popup may affect writing."
 (defvar-local eldoc-mouse-unsupress-posframe nil
   "Temporarily unsupress the posframe.
 By default, posframe will not used by eldoc.")
+
+(defvar-local eldoc-mouse--original-display-functions nil
+  "Store the original `eldoc-display-functions'.")
 
 (defun eldoc-mouse-show-doc-at (pos)
   "Ask eldoc to show documentation for symbol at POS.
@@ -191,44 +194,53 @@ Argument INTERACTIVE the argument used by eldoc."
       
       t)))  ;; non-nil => suppress other display functions
 
-
-(defun eldoc-mouse-setup ()
-  "Set up eldoc-mouse for the current buffer."
-  (add-hook 'eglot-managed-mode-hook #'eldoc-mouse-handle-eglot-hooks t)
-  ;; Bind mouse movement to documentation display
-  (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
-
-;;;###autoload
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in all `prog-mode' buffers."
-  (interactive)
-
-  ;; (setq eldoc-message-function #'eldoc-mouse-message-function)
-  ;; Enable mouse tracking
-  (setq track-mouse t)
-
-  (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
-
-  ;; (add-to-list 'eldoc-display-functions #'eldoc-mouse-display-in-posframe)
-  ;; make sure the eldoc-mouse also enabled to the current buffer.
   (when (eglot-managed-p)
-    ;; (eldoc-box-hover-mode)
-    (eldoc-mouse-handle-eglot-hooks)
-    (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
-  (add-hook 'prog-mode-hook #'eldoc-mouse-setup))
+    ;; Enable mouse tracking
+    (setq track-mouse t)
+    (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
+    (setq-local eldoc-mouse--original-display-functions eldoc-display-functions)
+    (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
+    ;; Avoid unnecessary document of signatures that clutters the document.
+    (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
+    ;; Avoid show document for the cursor.
+    (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
+    ;; Enable highlight symbol under the cursor.
+    ;; In the future the following line is no longer necessary, as emacs use a specific function eglot-highlight-eldoc-function for highlighting.
+    ;; And here, we want to keep the highlight at cursor.
+    ;; see details: https://cgit.git.savannah.gnu.org/cgit/emacs.git/commit/?id=60166a419f601b413db86ddce186cc387e8ec269
+    (when (fboundp 'eglot--highlight-piggyback)
+      (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t))
+    (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse)))
 
-;;;###autoload
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in all `prog-mode' buffers."
-  (interactive)
   (setq track-mouse nil)
   (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe)
-  (remove-hook 'prog-mode-hook #'eldoc-mouse-setup)
-  (remove-hook 'eglot-managed-mode-hook #'eldoc-mouse-handle-eglot-hooks)
+  (when eldoc-mouse--original-display-functions
+    (setq-local eldoc-display-functions eldoc-mouse--original-display-functions))
+  (when (fboundp 'eglot--highlight-piggyback)
+    (remove-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback t))
+  
+  (unless (memq #'eglot-signature-eldoc-function eldoc-documentation-functions)
+    (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t))
+  (unless (memq #'eglot-hover-eldoc-function eldoc-documentation-functions)
+    (add-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function nil t))
+  
   (when eldoc-mouse-mouse-timer
     (cancel-timer eldoc-mouse-mouse-timer)
     (setq eldoc-mouse-mouse-timer nil))
+  (eldoc-mouse--hide-posframe)
   (local-unset-key [mouse-movement]))
+
+;;;###autoload
+(define-minor-mode eldoc-mouse-mode
+  "Toggle the `eldoc-mouse-mode'."
+  :lighter "eldoc-mouse"
+  (if eldoc-mouse-mode
+      (eldoc-mouse-enable)
+    (eldoc-mouse-disable)))
 
 (provide 'eldoc-mouse)
 
