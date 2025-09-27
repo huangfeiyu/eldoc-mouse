@@ -253,23 +253,22 @@ Argument INTERACTIVE the argument used by eldoc."
     (if eldoc-mouse-mode
         (progn
           (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
-          (let ((bounds (bounds-of-thing-at-point 'symbol)))
-            (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
-            (setq-local eldoc-mouse-unsupress-posframe t)
-            (setq eldoc--last-request-state nil) ;; make sure eldoc always send the request to get doc.
-            (eldoc-print-current-symbol-info)
-            (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t)))
-      (progn
-        (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
-        (unless eldoc-mouse--original-display-functions
-          (setq-local eldoc-mouse--original-display-functions eldoc-display-functions))
-        (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
-        (let ((bounds (bounds-of-thing-at-point 'symbol)))
+          (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
           (setq-local eldoc-mouse-unsupress-posframe t)
           (setq eldoc--last-request-state nil) ;; make sure eldoc always send the request to get doc.
           (eldoc-print-current-symbol-info)
-          (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t)
-          (eldoc-mouse--pop-doc-at-cursor-cleanup))))))
+          (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t))
+      (progn
+        (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
+        (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
+        (unless eldoc-mouse--original-display-functions
+          (setq-local eldoc-mouse--original-display-functions eldoc-display-functions))
+        (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
+        (setq-local eldoc-mouse-unsupress-posframe t)
+        (setq eldoc--last-request-state nil) ;; make sure eldoc always send the request to get doc.
+        (eldoc-print-current-symbol-info)
+        (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t)
+        (eldoc-mouse--pop-doc-at-cursor-cleanup)))))
 
 ;;;###autoload
 (define-minor-mode eldoc-mouse-mode
