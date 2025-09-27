@@ -123,7 +123,8 @@ POS is the buffer position under the mouse cursor."
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
-  (posframe-hide eldoc-mouse-posframe-buffer-name))
+  (posframe-hide eldoc-mouse-posframe-buffer-name)
+  (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe))
 
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
@@ -182,6 +183,7 @@ Argument INTERACTIVE the argument used by eldoc."
                       (buffer-string)))
               (border-color (face-foreground 'default)))
           (when text
+            (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
             (posframe-show eldoc-mouse-posframe-buffer-name
                            :position (car eldoc-mouse-last-symbol-bounds)
                            :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
@@ -194,12 +196,21 @@ Argument INTERACTIVE the argument used by eldoc."
       
       t)))  ;; non-nil => suppress other display functions
 
+(defun eldoc-mouse--pop-doc-at-cursor-cleanup ()
+  "Restore the state after pop doc at cursor when `eldoc-mouse-mode' is off."
+  (when eldoc-mouse--original-display-functions
+    (if (not eldoc-mouse-unsupress-posframe) ;; document has been poped up.
+        (progn
+          (setq-local eldoc-display-functions eldoc-mouse--original-display-functions)
+          (setq-local eldoc-mouse--original-display-functions nil))
+      (run-with-idle-timer
+       1 nil #'eldoc-mouse--pop-doc-at-cursor-cleanup))))
+
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in all `prog-mode' buffers."
   (when (eglot-managed-p)
     ;; Enable mouse tracking
     (setq track-mouse t)
-    (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
     (setq-local eldoc-mouse--original-display-functions eldoc-display-functions)
     (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
     ;; Avoid unnecessary document of signatures that clutters the document.
@@ -217,7 +228,6 @@ Argument INTERACTIVE the argument used by eldoc."
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in all `prog-mode' buffers."
   (setq track-mouse nil)
-  (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe)
   (when eldoc-mouse--original-display-functions
     (setq-local eldoc-display-functions eldoc-mouse--original-display-functions))
   (when (fboundp 'eglot--highlight-piggyback)
@@ -235,9 +245,36 @@ Argument INTERACTIVE the argument used by eldoc."
   (local-unset-key [mouse-movement]))
 
 ;;;###autoload
+(defun eldoc-mouse-pop-doc-at-cursor ()
+  "Show document at the cursor."
+  (interactive)
+  (eldoc-mouse--hide-posframe)
+  (when (thing-at-point 'symbol)
+    (if eldoc-mouse-mode
+        (progn
+          (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
+          (let ((bounds (bounds-of-thing-at-point 'symbol)))
+            (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
+            (setq-local eldoc-mouse-unsupress-posframe t)
+            (setq eldoc--last-request-state nil) ;; make sure eldoc always send the request to get doc.
+            (eldoc-print-current-symbol-info)
+            (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t)))
+      (progn
+        (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
+        (unless eldoc-mouse--original-display-functions
+          (setq-local eldoc-mouse--original-display-functions eldoc-display-functions))
+        (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
+        (let ((bounds (bounds-of-thing-at-point 'symbol)))
+          (setq-local eldoc-mouse-unsupress-posframe t)
+          (setq eldoc--last-request-state nil) ;; make sure eldoc always send the request to get doc.
+          (eldoc-print-current-symbol-info)
+          (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t)
+          (eldoc-mouse--pop-doc-at-cursor-cleanup))))))
+
+;;;###autoload
 (define-minor-mode eldoc-mouse-mode
   "Toggle the `eldoc-mouse-mode'."
-  :lighter "eldoc-mouse"
+  :lighter " eldoc-mouse"
   (if eldoc-mouse-mode
       (eldoc-mouse-enable)
     (eldoc-mouse-disable)))
