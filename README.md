@@ -10,7 +10,7 @@
 - Support moving mouse to the popup by move mouse on it and click.
 - Automatically hide the popup when mouse moved away from the symbol, also supoort pressing `C-g` to hide the popup.
 - Avoids spamming the LSP server by debouncing hover events.
-- Works in `prog-mode` buffers to show documentation for the symbol under the mouse point.
+- Works in eglot managed buffers to show documentation for the symbol under the mouse point.
 - Removed the unnecessary signatures from the document to make doucment more clear.
 - Still keep highlighting the symbol under the cursor.
 - An interactive command to pop up document at cursor `eldoc-mouse-pop-doc-at-cursor`, this is helpful when you don't bother to move mouse, but want to check document. I bind it to key sequence `F1 F1`, press Ctrl-G to close the popup. 
