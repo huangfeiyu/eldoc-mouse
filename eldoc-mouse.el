@@ -139,7 +139,8 @@ POS is the buffer position under the mouse cursor."
              eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at pos)))))
 
 (defun eldoc-mouse-hover-eldoc-function (cb)
-  "Modify the `eglot-hover-eldoc-function', so it won't call `eglot--highlight-piggyback', `CB'."
+  "Modify the `eglot-hover-eldoc-function'.
+So it won't call `eglot--highlight-piggyback', `CB'."
   (if (fboundp 'eglot--highlight-piggyback)
       (cl-letf (((symbol-function 'eglot--highlight-piggyback) (lambda (&rest args) (message ""))))
         (eglot-hover-eldoc-function cb))
@@ -147,9 +148,9 @@ POS is the buffer position under the mouse cursor."
 
 (defun eldoc-mouse-handle-eglot-hooks ()
   "Handle the eldoc eglot hooks.
-Remove all eglot hooks and add highlight hook, add eldoc-mouse's `eldoc-display-functions'."
+Remove all eglot hooks and keep highlighting on cursor,
+add eldoc-mouse's `eldoc-display-functions'."
   (setq-local eldoc-display-functions (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
-  "remove the hooks that display doc on cursor hover, keep highlighting on cursor."
   ;; Avoid unnecessary document of signatures that clutters the document.
   (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
   ;; Avoid show document for the cursor.
@@ -207,7 +208,7 @@ Argument INTERACTIVE the argument used by eldoc."
        1 nil #'eldoc-mouse--pop-doc-at-cursor-cleanup))))
 
 (defun eldoc-mouse-enable ()
-  "Enable eldoc-mouse in all `prog-mode' buffers."
+  "Enable eldoc-mouse in all `eglot-managed-p' buffers."
   (when (eglot-managed-p)
     ;; Enable mouse tracking
     (setq track-mouse t)
@@ -226,7 +227,7 @@ Argument INTERACTIVE the argument used by eldoc."
     (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse)))
 
 (defun eldoc-mouse-disable ()
-  "Disable eldoc-mouse in all `prog-mode' buffers."
+  "Disable eldoc-mouse in all `eglot-managed-p' buffers."
   (setq track-mouse nil)
   (when eldoc-mouse--original-display-functions
     (setq-local eldoc-display-functions eldoc-mouse--original-display-functions))
