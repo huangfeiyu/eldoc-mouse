@@ -142,7 +142,7 @@ POS is the buffer position under the mouse cursor."
   "Modify the `eglot-hover-eldoc-function'.
 So it won't call `eglot--highlight-piggyback', `CB'."
   (if (fboundp 'eglot--highlight-piggyback)
-      (cl-letf (((symbol-function 'eglot--highlight-piggyback) (lambda (&rest args) (message ""))))
+      (cl-letf (((symbol-function 'eglot--highlight-piggyback) (lambda (&rest _args) (message ""))))
         (eglot-hover-eldoc-function cb))
     (eglot-hover-eldoc-function cb)))
 
@@ -171,7 +171,7 @@ add eldoc-mouse's `eldoc-display-functions'."
         t
       nil)))
 
-(defun eldoc-mouse-display-in-posframe (docs interactive)
+(defun eldoc-mouse-display-in-posframe (docs _interactive)
   "Display `DOCS' STRING in a posframe at the current mouse position.
 Argument INTERACTIVE the argument used by eldoc."
   (when (and docs eldoc-mouse-unsupress-posframe)
