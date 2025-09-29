@@ -140,7 +140,7 @@ POS is the buffer position under the mouse cursor."
 
 (defun eldoc-mouse-hover-eldoc-function (cb)
   "Modify the `eglot-hover-eldoc-function'.
-So it won't call `eglot--highlight-piggyback', `CB'."
+So it won't call `eglot--highlight-piggyback` with `CB`."
   (if (fboundp 'eglot--highlight-piggyback)
       (cl-letf (((symbol-function 'eglot--highlight-piggyback) (lambda (&rest _args) (message ""))))
         (eglot-hover-eldoc-function cb))
@@ -172,8 +172,7 @@ add eldoc-mouse's `eldoc-display-functions'."
       nil)))
 
 (defun eldoc-mouse-display-in-posframe (docs _interactive)
-  "Display `DOCS' STRING in a posframe at the current mouse position.
-Argument INTERACTIVE the argument used by eldoc."
+  "Display `DOCS` STRING in a posframe at the current mouse position."
   (when (and docs eldoc-mouse-unsupress-posframe)
     (setq-local eldoc-mouse-unsupress-posframe nil)
     ;; output the document for *eldoc* buffer
@@ -246,6 +245,14 @@ Argument INTERACTIVE the argument used by eldoc."
   (local-unset-key [mouse-movement]))
 
 ;;;###autoload
+(define-minor-mode eldoc-mouse-mode
+  "Toggle the `eldoc-mouse-mode'."
+  :lighter " eldoc-mouse"
+  (if eldoc-mouse-mode
+      (eldoc-mouse-enable)
+    (eldoc-mouse-disable)))
+
+;;;###autoload
 (defun eldoc-mouse-pop-doc-at-cursor ()
   "Show document at the cursor."
   (interactive)
@@ -270,14 +277,6 @@ Argument INTERACTIVE the argument used by eldoc."
         (eldoc-print-current-symbol-info)
         (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t)
         (eldoc-mouse--pop-doc-at-cursor-cleanup)))))
-
-;;;###autoload
-(define-minor-mode eldoc-mouse-mode
-  "Toggle the `eldoc-mouse-mode'."
-  :lighter " eldoc-mouse"
-  (if eldoc-mouse-mode
-      (eldoc-mouse-enable)
-    (eldoc-mouse-disable)))
 
 (provide 'eldoc-mouse)
 
