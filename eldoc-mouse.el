@@ -112,6 +112,9 @@ POS is the buffer position under the mouse cursor."
       (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
       (goto-char pos)
       (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
+      ;; use (nth 4 (syntax-ppss)) to check if the mouse is overing code comment.
+      ;; based on the answer from
+      ;; https://emacs.stackexchange.com/questions/14269/how-to-detect-if-the-point-is-within-a-comment-area/14270#14270
       (when (and (not (eolp)) (not (nth 4 (syntax-ppss))) (thing-at-point 'symbol))
         (setq-local eldoc-mouse-unsupress-posframe t)
         (eldoc-print-current-symbol-info)
