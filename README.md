@@ -13,7 +13,7 @@
 - Works in eglot managed buffers to show documentation for the symbol under the mouse point.
 - Removed the unnecessary signatures from the document to make doucment more clear.
 - Still keep highlighting the symbol under the cursor.
-- An interactive command to pop up document at cursor `eldoc-mouse-pop-doc-at-cursor`, this is helpful when you don't bother to move mouse, but want to check document. I bind it to key sequence `F1 F1`, press Ctrl-G to close the popup. 
+- An interactive command to pop up document at cursor `eldoc-mouse-pop-doc-at-cursor`, this is helpful when you don't bother to move mouse, but want to check document. I bind it to key sequence `F1 F1`, press Ctrl-G or moving cursor away from the current symbol to close the popup. 
 
 ## Installation
 
