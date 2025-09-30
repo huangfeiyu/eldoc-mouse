@@ -94,6 +94,20 @@ By default, posframe will not used by eldoc.")
 (defvar-local eldoc-mouse--original-display-functions nil
   "Store the original `eldoc-display-functions'.")
 
+(defun eldoc-mouse--post-command-hook ()
+  "The hook of post-command used by eldoc-mouse.
+Support close the popup when the cursor is moved away."
+  (when (not (eq 'eldoc-mouse-doc-on-mouse this-command))
+    (let ((pos (point)))
+    (when (or (< pos (car eldoc-mouse-last-symbol-bounds))
+              (> pos (cdr eldoc-mouse-last-symbol-bounds)))
+      (eldoc-mouse--hide-posframe)))))
+
+(defun eldoc-mouse--change-buffer-hook()
+  "The hook when changing buffer.
+Support close the popup when user switch buffer."
+  (eldoc-mouse--hide-posframe))
+
 (defun eldoc-mouse-show-doc-at (pos)
   "Ask eldoc to show documentation for symbol at POS.
 POS is the buffer position under the mouse cursor."
@@ -126,8 +140,10 @@ POS is the buffer position under the mouse cursor."
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
-  (posframe-hide eldoc-mouse-posframe-buffer-name)
-  (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe))
+  (remove-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook t)
+  (remove-hook 'post-command-hook #'eldoc-mouse--post-command-hook t)
+  (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe)
+  (posframe-hide eldoc-mouse-posframe-buffer-name))
 
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
@@ -186,18 +202,24 @@ add eldoc-mouse's `eldoc-display-functions'."
                       (buffer-string)))
               (border-color (face-foreground 'default)))
           (when text
-            (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
-            (posframe-show eldoc-mouse-posframe-buffer-name
-                           :position (car eldoc-mouse-last-symbol-bounds)
-                           :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
-                           :max-width eldoc-mouse-posframe-max-width
-                           :min-height eldoc-mouse-posframe-min-height
-                           :max-height eldoc-mouse-posframe-max-height
-                           :border-width 1
-                           :border-color border-color
-                           :string text))))
+            (eldoc-mouse--pop-doc text border-color))))
       
       t)))  ;; non-nil => suppress other display functions
+
+(defun eldoc-mouse--pop-doc (doc border-color)
+  "Pop up the document `DOC' on posframe with `BORDER-COLOR'."
+  (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
+  (add-hook 'post-command-hook #'eldoc-mouse--post-command-hook nil t)
+  (add-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook nil t)
+  (posframe-show eldoc-mouse-posframe-buffer-name
+                 :position (car eldoc-mouse-last-symbol-bounds)
+                 :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
+                 :max-width eldoc-mouse-posframe-max-width
+                 :min-height eldoc-mouse-posframe-min-height
+                 :max-height eldoc-mouse-posframe-max-height
+                 :border-width 1
+                 :border-color border-color
+                 :string doc))
 
 (defun eldoc-mouse--pop-doc-at-cursor-cleanup ()
   "Restore the state after pop doc at cursor when `eldoc-mouse-mode' is off."
