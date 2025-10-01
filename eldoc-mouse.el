@@ -210,7 +210,7 @@ POS is the buffer position under the mouse cursor."
         ;; Use (nth 4 (syntax-ppss)) to check if the mouse is over a code comment.
         ;; based on the answer from
         ;; https://emacs.stackexchange.com/questions/14269/14270#14270
-        (when (and (not (eolp)) (not (nth 4 (syntax-ppss))) eldoc-mouse-last-symbol-bounds)
+        (when (and eldoc-mouse-last-symbol-bounds (not (eolp)) (not (nth 4 (syntax-ppss))))
           (setq-local eldoc-mouse-unsupress-posframe t)
           (eldoc-print-current-symbol-info)
           (setq-local eldoc-mouse-mouse-overlay
