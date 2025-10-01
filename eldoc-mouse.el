@@ -57,7 +57,7 @@ that the mouse hover on a symbol before
   :group 'eldoc-mouse)
 
 (defcustom eldoc-mouse-posframe-max-width 70
-  "The maximum number of charactersthe posframe may contain in each line."
+  "The maximum number of characters the posframe may contain in each line."
   :type 'number
   :group 'eldoc-mouse)
 
@@ -88,7 +88,7 @@ no limit, the popup may affect writing."
   "Bounds of the last symbol processed for eldoc.")
 
 (defvar-local eldoc-mouse-unsupress-posframe nil
-  "Temporarily unsupress the posframe.
+  "Temporarily un-suppress the posframe.
 By default, posframe will not used by eldoc.")
 
 (defvar-local eldoc-mouse--original-display-functions nil
@@ -116,7 +116,7 @@ By default, posframe will not used by eldoc.")
         (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
         (setq-local eldoc-mouse-unsupress-posframe t)
 
-        ;; make sure eldoc always send the request to get doc.
+        ;; Make sure eldoc always send the request to get doc.
         (setq eldoc--last-request-state nil)
 
         (eldoc-print-current-symbol-info)))
@@ -129,7 +129,7 @@ By default, posframe will not used by eldoc.")
                   (append eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
       (setq-local eldoc-mouse-unsupress-posframe t)
 
-      ;; make sure eldoc always send the request to get doc.
+      ;; Make sure eldoc always send the request to get doc.
       (setq eldoc--last-request-state nil)
 
       (eldoc-print-current-symbol-info)
@@ -137,7 +137,7 @@ By default, posframe will not used by eldoc.")
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in all `eglot-managed-p' buffers."
   (when (eglot-managed-p)
-    ;; Enable mouse tracking
+    ;; Enable mouse tracking.
     (setq track-mouse t)
     (setq-local eldoc-mouse--original-display-functions eldoc-display-functions)
     (setq-local eldoc-display-functions
@@ -147,7 +147,8 @@ By default, posframe will not used by eldoc.")
     ;; Avoid show document for the cursor.
     (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
     ;; Enable highlight symbol under the cursor.
-    ;; In the future the following line is no longer necessary, as emacs use a specific function eglot-highlight-eldoc-function for highlighting.
+    ;; In the future the following line is no longer necessary,
+    ;; as emacs use a specific function `eglot-highlight-eldoc-function' for highlighting.
     ;; And here, we want to keep the highlight at cursor.
     ;; see details: https://cgit.git.savannah.gnu.org/cgit/emacs.git/commit/?id=60166a419f601b413db86ddce186cc387e8ec269
     (when (fboundp 'eglot--highlight-piggyback)
@@ -206,7 +207,7 @@ POS is the buffer position under the mouse cursor."
              (cons #'eldoc-mouse-hover-eldoc-function eldoc-documentation-functions)))
         (goto-char pos)
         (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
-        ;; use (nth 4 (syntax-ppss)) to check if the mouse is overing code comment.
+        ;; Use (nth 4 (syntax-ppss)) to check if the mouse is over a code comment.
         ;; based on the answer from
         ;; https://emacs.stackexchange.com/questions/14269/14270#14270
         (when (and (not (eolp)) (not (nth 4 (syntax-ppss))) eldoc-mouse-last-symbol-bounds)
@@ -231,7 +232,7 @@ POS is the buffer position under the mouse cursor."
   (interactive "e")
   (let ((pos (posn-point (event-start event))))
     (when (and pos (number-or-marker-p pos) (eglot-managed-p))
-      ;; Debounce to avoid spamming eglot
+      ;; Debounce to avoid spamming eglot.
       (when eldoc-mouse-mouse-timer
         (cancel-timer eldoc-mouse-mouse-timer))
       (setq eldoc-mouse-mouse-timer
@@ -270,7 +271,7 @@ add eldoc-mouse's `eldoc-display-functions'."
   (let* ((posframe (get-buffer posframe-name)) ;; Get the posframe buffer
          (frame (get-buffer-window posframe)))
     ;; keep the child frame when it is clicked, need a better
-    ;; way to determine if the mouse is overing the child frame.
+    ;; way to determine if the mouse is over the child frame.
     (if (and posframe (windowp frame))
         t
       nil)))
@@ -279,7 +280,7 @@ add eldoc-mouse's `eldoc-display-functions'."
   "Display `DOCS` STRING in a posframe at the current mouse position."
   (when (and docs eldoc-mouse-unsupress-posframe)
     (setq-local eldoc-mouse-unsupress-posframe nil)
-    ;; output the document for *eldoc* buffer
+    ;; Output the document for *eldoc* buffer.
     ;; (eldoc--format-doc-buffer docs)
     (let* ((eldoc-buffer
             (get-buffer
@@ -295,8 +296,8 @@ add eldoc-mouse's `eldoc-display-functions'."
               (border-color (face-foreground 'default)))
           (when text
             (eldoc-mouse--pop-doc text border-color))))
-
-      t))) ;; non-nil => suppress other display functions
+      ;; non-nil => suppress other display functions.
+      t)))
 
 (defun eldoc-mouse--pop-doc (doc border-color)
   "Pop up the document `DOC' on posframe with `BORDER-COLOR'."
