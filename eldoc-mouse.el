@@ -109,13 +109,12 @@ By default, posframe will not used by eldoc.")
   (eldoc-mouse--hide-posframe)
   (when (thing-at-point 'symbol)
     (if eldoc-mouse-mode
-        (progn
-          (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
+        (let ((eldoc-documentation-functions
+               (cons #'eldoc-mouse-hover-eldoc-function  eldoc-documentation-functions)))
           (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
           (setq-local eldoc-mouse-unsupress-posframe t)
           (setq eldoc--last-request-state nil) ;; make sure eldoc always send the request to get doc.
-          (eldoc-print-current-symbol-info)
-          (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t))
+          (eldoc-print-current-symbol-info))
       (progn
         (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
         (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
