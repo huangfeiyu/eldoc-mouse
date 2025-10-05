@@ -321,7 +321,6 @@ add eldoc-mouse's `eldoc-display-functions'."
 (provide 'eldoc-mouse)
 
 ;; Local Variables:
-;; fill-column: 99
 ;; indent-tabs-mode: nil
 ;; End:
 ;;; eldoc-mouse.el ends here
