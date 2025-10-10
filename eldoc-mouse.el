@@ -111,15 +111,15 @@ By default, posframe will not used by eldoc.")
   (when-let* ((symbol-bounds (bounds-of-thing-at-point 'symbol)))
     (cond
      (eldoc-mouse-mode
-      (let ((eldoc-documentation-functions
-             (cons #'eldoc-mouse-hover-eldoc-function eldoc-documentation-functions)))
-        (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
-        (setq-local eldoc-mouse-unsupress-posframe t)
+      (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
+      (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
+      (setq-local eldoc-mouse-unsupress-posframe t)
 
-        ;; Make sure eldoc always send the request to get doc.
-        (setq eldoc--last-request-state nil)
+      ;; Make sure eldoc always send the request to get doc.
+      (setq eldoc--last-request-state nil)
 
-        (eldoc-print-current-symbol-info)))
+      (eldoc-print-current-symbol-info)
+      (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t))
      (t
       (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
       (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
@@ -203,22 +203,22 @@ POS is the buffer position under the mouse cursor."
     (when eldoc-mouse-mouse-overlay
       (delete-overlay eldoc-mouse-mouse-overlay))
     (save-excursion
-      (let ((eldoc-documentation-functions
-             (cons #'eldoc-mouse-hover-eldoc-function eldoc-documentation-functions)))
-        (goto-char pos)
-        (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
-        ;; Use (nth 4 (syntax-ppss)) to check if the mouse is over a code comment.
-        ;; based on the answer from
-        ;; https://emacs.stackexchange.com/questions/14269/14270#14270
-        (when (and eldoc-mouse-last-symbol-bounds (not (eolp)) (not (nth 4 (syntax-ppss))))
-          (setq-local eldoc-mouse-unsupress-posframe t)
-          (eldoc-print-current-symbol-info)
-          (setq-local eldoc-mouse-mouse-overlay
-                      (make-overlay
-                       (car eldoc-mouse-last-symbol-bounds) (cdr eldoc-mouse-last-symbol-bounds)))
-          (overlay-put eldoc-mouse-mouse-overlay 'face 'highlight))
-        (when (fboundp 'eglot--highlight-piggyback)
-          (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t))))))
+      (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
+      (goto-char pos)
+      (setq-local eldoc-mouse-last-symbol-bounds (bounds-of-thing-at-point 'symbol))
+      ;; Use (nth 4 (syntax-ppss)) to check if the mouse is over a code comment.
+      ;; based on the answer from
+      ;; https://emacs.stackexchange.com/questions/14269/14270#14270
+      (when (and eldoc-mouse-last-symbol-bounds (not (eolp)) (not (nth 4 (syntax-ppss))))
+        (setq-local eldoc-mouse-unsupress-posframe t)
+        (eldoc-print-current-symbol-info)
+        (setq-local eldoc-mouse-mouse-overlay
+                    (make-overlay
+                     (car eldoc-mouse-last-symbol-bounds) (cdr eldoc-mouse-last-symbol-bounds)))
+        (overlay-put eldoc-mouse-mouse-overlay 'face 'highlight))
+      (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t)
+      (when (fboundp 'eglot--highlight-piggyback)
+        (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t)))))
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
