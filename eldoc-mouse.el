@@ -173,8 +173,6 @@ By default, posframe will not used by eldoc.")
 
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in all `eglot-managed-p' buffers."
-  (when (y-or-n-p "Disable mouse-tracking (may impact other modes)?")
-    (setq track-mouse nil))
   (when eldoc-mouse--original-display-functions
     (setq-local eldoc-display-functions
                 eldoc-mouse--original-display-functions))
@@ -194,7 +192,9 @@ By default, posframe will not used by eldoc.")
     (cancel-timer eldoc-mouse-mouse-timer)
     (setq eldoc-mouse-mouse-timer nil))
   (eldoc-mouse--hide-posframe)
-  (local-unset-key [mouse-movement]))
+  (local-unset-key [mouse-movement])
+  (when (y-or-n-p "Disable mouse-tracking (may impact other modes)?")
+    (setq track-mouse nil)))
 
 (defun eldoc-mouse--post-command-hook ()
   "The hook of post-command used by eldoc-mouse.
