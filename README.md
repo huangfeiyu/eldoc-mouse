@@ -1,3 +1,5 @@
+[![melpa badge][melpa-badge]][melpa-link]
+
 # eldoc-mouse
 
 `eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a popup at the mouse point using [posframe](https://github.com/tumashu/posframe) when the mouse hovers over a symbol in an `eglot` managed buffer. It integrates with `posframe` to provide popping up documentation and features a debounced hover mechanism to prevent excessive requests to the LSP server.
@@ -17,23 +19,19 @@
 
 ## Installation
 
-Clone this repository and load it into your Emacs configuration:
+`eldoc-mouse` is available on [MELPA](https://melpa.org/)
 
-```sh
-git clone https://github.com/huangfeiyu/eldoc-mouse.git
-```
-Then, in your Emacs configuration:
+You can install `eldoc-mouse` with the following command.
 
-``` elisp
-(add-to-list 'load-path "/path/to/eldoc-mouse/")
-(require 'eldoc-mouse)
-```
+<kbd>M-x package-install [RET] eldoc-mouse [RET]</kbd>
 
 ## Usage
 ### Enable eldoc-mouse:
 Add the following in your Emacs configuration:
 ```
-(add-hook 'eglot-managed-mode-hook #'eldoc-mouse-mode t)
+;; The following two lines are both optional, but you would like to add at least one of them to your Emacs configuration.
+(use-package eldoc-mouse :hook (eglot-managed-mode)) ;; enable mouse hover for eglot managed buffers.
+(global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor) ;; replace <f1> <f1> to a key you like. Displaying document on a popup when you press a key.
 ```
 ## Customization
 
@@ -67,3 +65,6 @@ Feel free to open issues and pull requests for improvements. If you encounter an
 Author
 
 Huang Feiyu sibadake1@163.com
+
+[melpa-link]: https://melpa.org/#/eldoc-mouse
+[melpa-badge]: https://melpa.org/packages/eldoc-mouse-badge.svg
