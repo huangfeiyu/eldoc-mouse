@@ -35,7 +35,7 @@ Add the following in your Emacs configuration:
 ```
 ## Customization
 
-You can customize the behavior of eldoc-mouse by adjusting the variables or adding additional hooks. For instance, you can adjust the delay time between mouse hover and displaying the documentation by changing the eldoc-mouse-mouse-timer settings.
+You can customize the behavior of eldoc-mouse by adjusting the variables. For instance, you can adjust the delay time between mouse hover and displaying the documentation by changing the eldoc-mouse-mouse-timer settings.
 ## Requirements
 
     Emacs 30.1 or higher
