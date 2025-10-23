@@ -3,7 +3,8 @@
 ;; Copyright (C) 2025 Huang Feiyu
 
 ;; Author: Huang Feiyu sibadake1@163.com
-;; Version: 0.1
+;; Package-Version: 20251015.1027
+;; Package-Revision: 9ca2aec75f72
 ;; Package-Requires: ((emacs "30.1") (posframe "1.4.0") (eglot "1.8"))
 ;; Keywords: tools, languages, convenience, emacs, mouse, hover
 ;; URL: https://github.com/huangfeiyu/eldoc-mouse
@@ -125,9 +126,11 @@ By default, posframe will not used by eldoc.")
        'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function
        t))
      (t
-      (remove-hook
-       'eldoc-documentation-functions #'eglot-signature-eldoc-function
-       t)
+      (when (eglot-managed-p)
+        (remove-hook
+         'eldoc-documentation-functions #'eglot-signature-eldoc-function
+         t))
+      
       (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
       (unless eldoc-mouse--original-display-functions
         (setq-local eldoc-mouse--original-display-functions
@@ -141,9 +144,10 @@ By default, posframe will not used by eldoc.")
       (setq eldoc--last-request-state nil)
 
       (eldoc-print-current-symbol-info)
-      (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function
-                nil
-                t)))))
+      (when (eglot-managed-p)
+        (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function
+                  nil
+                  t))))))
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in all `eglot-managed-p' buffers."
   (when (eglot-managed-p)
