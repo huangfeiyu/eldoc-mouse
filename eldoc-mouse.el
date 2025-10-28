@@ -244,7 +244,9 @@ POS is the buffer position under the mouse cursor."
                  (not (eolp))
                  (not (nth 4 (syntax-ppss))))
         (setq-local eldoc-mouse-unsupress-posframe t)
+        (advice-add 'eglot-hover-eldoc-function :around #'eldoc-mouse--hover-edloc-function-advise)
         (eldoc-print-current-symbol-info)
+        (advice-remove 'eglot-hover-eldoc-function #'eldoc-mouse--hover-edloc-function-advise)
         (setq-local eldoc-mouse-mouse-overlay
                     (make-overlay
                      (car eldoc-mouse-last-symbol-bounds)
@@ -287,6 +289,16 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
         (eglot-hover-eldoc-function cb))
     (eglot-hover-eldoc-function cb)))
 
+(defun eldoc-mouse--hover-edloc-function-advise (orig-fn fn)
+  "Wrap FN argument of ORIG-FN so that it appends '*^eldoc-mouse*^'."
+  (let ((result (funcall orig-fn
+           (lambda (s @rest r)
+             (funcall fn (concat s "*^eldoc-mouse*^") r)
+             ))))
+    (if (stringp result)
+        (conact result "*^eldoc-mouse*^")
+      result)))
+
 (defun eldoc-mouse-handle-eglot-hooks ()
   "Handle the eldoc eglot hooks.
 Remove all eglot hooks and keep highlighting on cursor,
@@ -323,8 +335,7 @@ add eldoc-mouse's `eldoc-display-functions'."
 
 (defun eldoc-mouse-display-in-posframe (docs _interactive)
   "Display `DOCS` STRING in a posframe at the current mouse position."
-  (when (and docs eldoc-mouse-unsupress-posframe)
-    (setq-local eldoc-mouse-unsupress-posframe nil)
+  (when (and docs (string-match-p (regexp-quote "*^eldoc-mouse*^") (car (car docs))))
     ;; Output the document for *eldoc* buffer.
     ;; (eldoc--format-doc-buffer docs)
     (let* ((eldoc-buffer
@@ -340,7 +351,7 @@ add eldoc-mouse's `eldoc-display-functions'."
                  (buffer-string)))
               (border-color (face-foreground 'default)))
           (when text
-            (eldoc-mouse--pop-doc text border-color))))
+            (eldoc-mouse--pop-doc (replace-regexp-in-string (regexp-quote "*^eldoc-mouse*^") "" (car (car docs))) border-color))))
       ;; non-nil => suppress other display functions.
       t)))
 
