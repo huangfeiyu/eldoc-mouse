@@ -28,10 +28,9 @@
 ;;; Commentary:
 
 ;; This package enhances eldoc' by displaying documentation in a child frame
-;; when the mouse hovers over a symbol in eglot'-managed buffers.  It integrates
-;; with posframe' for popup documentation and provides a debounced mouse hover
-;; mechanism to avoid spamming the LSP server.  Enable it in prog-mode' buffers
-;; to show documentation for the symbol under the mouse cursor.
+;; when the mouse hovers over a symbol.  It integrates with posframe' for popup 
+;; documentation. Enable it in buffers that you want to show documentation using
+;; eldoc for the symbol under the mouse cursor.
 
 ;; To use, ensure posframe is installed, then add:
 ;; (require 'eldoc-mouse)
@@ -87,15 +86,19 @@ no limit, the popup may affect writing."
 (defvar-local eldoc-mouse-last-symbol-bounds nil
   "Bounds of the last symbol processed for eldoc.")
 
-(defvar-local eldoc-mouse-unsupress-posframe nil
-  "Temporarily un-suppress the posframe.
-By default, posframe will not used by eldoc.")
-
 (defvar-local eldoc-mouse--original-display-functions nil
   "Store the original `eldoc-display-functions'.")
 
 (defvar-local eldoc-mouse--doc-identifier "*^eldoc-mouse*^"
   "The identifier used for distinguish the doc triggered by eldoc-mouse.")
+
+(defvar eldoc-mouse--eldoc-documentation-functions
+  '(eldoc-mouse--eglot-eldoc-documentation-function
+    eldoc-mouse--elisp-eldoc-documentation-function)
+  "The `eldoc-documentation-functions' for `eldoc-mouse-mode'.")
+
+(defvar-local eldoc-mouse--original-documentation-functions nil
+  "The original eldoc-documentation-fuctions.")
 
 ;;;###autoload
 (define-minor-mode eldoc-mouse-mode
@@ -112,44 +115,24 @@ By default, posframe will not used by eldoc.")
   (interactive)
   (eldoc-mouse--hide-posframe)
   (when-let* ((symbol-bounds (bounds-of-thing-at-point 'symbol)))
-    (cond
-     (eldoc-mouse-mode
-      (add-hook
-       'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function
-       nil t)
-      (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
-      (setq-local eldoc-mouse-unsupress-posframe t)
-
-      ;; Make sure eldoc always send the request to get doc.
-      (setq eldoc--last-request-state nil)
-
-      (eldoc-print-current-symbol-info)
-      (remove-hook
-       'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function
-       t))
-     (t
-      (when (eglot-managed-p)
-        (remove-hook
-         'eldoc-documentation-functions #'eglot-signature-eldoc-function
-         t))
-      
-      (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
+    (setq-local eldoc-mouse--original-documentation-functions eldoc-documentation-functions)
+    (setq-local eldoc-documentation-functions nil)
+    (dolist (fun-sym eldoc-mouse--eldoc-documentation-functions)
+      (advice-add fun-sym :around #'eldoc-mouse--hover-edloc-function-advise)
+      (add-hook 'eldoc-documentation-functions (symbol-function fun-sym) nil t))
+    (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
+    (when (not eldoc-mouse-mode)
       (unless eldoc-mouse--original-display-functions
-        (setq-local eldoc-mouse--original-display-functions
-                    eldoc-display-functions))
+        (setq-local eldoc-mouse--original-display-functions eldoc-display-functions))
       (setq-local eldoc-display-functions
                   (append
-                   eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
-      (setq-local eldoc-mouse-unsupress-posframe t)
+                   eldoc-display-functions '(eldoc-mouse-display-in-posframe))))
+    (setq eldoc--last-request-state nil)
+    (eldoc-print-current-symbol-info)
+    (dolist (fun-sym eldoc-mouse--eldoc-documentation-functions)
+      (advice-remove fun-sym #'eldoc-mouse--hover-edloc-function-advise))
+    (setq-local eldoc-documentation-functions eldoc-mouse--original-documentation-functions)))
 
-      ;; Make sure eldoc always send the request to get doc.
-      (setq eldoc--last-request-state nil)
-
-      (eldoc-print-current-symbol-info)
-      (when (eglot-managed-p)
-        (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function
-                  nil
-                  t))))))
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in buffers."
   ;; Enable mouse tracking.
@@ -160,17 +143,10 @@ By default, posframe will not used by eldoc.")
                eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
   (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse)
 
-  (when (eq major-mode 'emacs-lisp-mode)
-    ;; (setq-local eldoc-documentation-functions nil)
-    ;; (remove-hook 'eldoc-documentation-functions #'elisp-eldoc-var-docstring t)
-    ;; (remove-hook 'eldoc-documentation-functions #'elisp-eldoc-funcall t)
-    (add-hook 'eldoc-documentation-functions #'eldoc-mouse--elisp-eldoc-documentation-function nil t))
-  
+  ;; Optimization for eglot managed buffers.
   (when (eglot-managed-p)
-    
     ;; Avoid unnecessary document of signatures that clutters the document.
-    (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function
-                 t)
+    (remove-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function t)
     ;; Avoid show document for the cursor.
     (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
     ;; Enable highlight symbol under the cursor.
@@ -181,9 +157,7 @@ By default, posframe will not used by eldoc.")
     ;; See details:
     ;; https://cgit.git.savannah.gnu.org/cgit/emacs.git/commit/?id=60166a419f601b413db86ddce186cc387e8ec269
     (when (fboundp 'eglot--highlight-piggyback)
-      (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback
-                nil
-                t))))
+      (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t))))
 
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in buffers."
@@ -191,28 +165,22 @@ By default, posframe will not used by eldoc.")
     (setq-local eldoc-display-functions
                 eldoc-mouse--original-display-functions))
 
+  ;; Optimization for eglot managed buffers.
   (when (eglot-managed-p)
     (when (fboundp 'eglot--highlight-piggyback)
       (remove-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback t))
 
     (unless (memq #'eglot-signature-eldoc-function eldoc-documentation-functions)
-      (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function
-                nil
-                t))
+      (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t))
     (unless (memq #'eglot-hover-eldoc-function eldoc-documentation-functions)
-      (add-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function
-                nil
-                t)))
-
-  (when (eq major-mode 'emacs-lisp-mode)
-    (add-hook 'eldoc-documentation-functions #'eldoc-mouse--elisp-eldoc-documentation-function nil t))
+      (add-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function nil t)))
 
   (when eldoc-mouse-mouse-timer
     (cancel-timer eldoc-mouse-mouse-timer)
     (setq eldoc-mouse-mouse-timer nil))
   (eldoc-mouse--hide-posframe)
   (local-unset-key [mouse-movement])
-  (when (y-or-n-p "eldoc-mouse-mode has been turned off. Also disable mouse-tracking (may impact other modes)?")
+  (when (y-or-n-p "eldoc-mouse-mode has been turned off.  Also disable mouse-tracking (may impact other modes)?")
     (setq track-mouse nil)))
 
 (defun eldoc-mouse--post-command-hook ()
@@ -241,13 +209,14 @@ POS is the buffer position under the mouse cursor."
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
     (eldoc-mouse--hide-posframe)
-    (when (fboundp 'eglot--highlight-piggyback)
-      (remove-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback
-                   t))
     (when eldoc-mouse-mouse-overlay
       (delete-overlay eldoc-mouse-mouse-overlay))
     (save-excursion
-      ;; (add-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function nil t)
+      (setq-local eldoc-mouse--original-documentation-functions eldoc-documentation-functions)
+      (setq-local eldoc-documentation-functions nil)
+      (dolist (fun-sym eldoc-mouse--eldoc-documentation-functions)
+        (advice-add fun-sym :around #'eldoc-mouse--hover-edloc-function-advise)
+        (add-hook 'eldoc-documentation-functions (symbol-function fun-sym) nil t))
       (goto-char pos)
       (setq-local eldoc-mouse-last-symbol-bounds
                   (bounds-of-thing-at-point 'symbol))
@@ -257,21 +226,15 @@ POS is the buffer position under the mouse cursor."
       (when (and eldoc-mouse-last-symbol-bounds
                  (not (eolp))
                  (not (nth 4 (syntax-ppss))))
-        (setq-local eldoc-mouse-unsupress-posframe t)
-        ;; (advice-add 'eglot-hover-eldoc-function :around #'eldoc-mouse--hover-edloc-function-advise)
-        (advice-add 'eldoc-mouse--elisp-eldoc-documentation-function :around #'eldoc-mouse--hover-edloc-function-advise)
         (eldoc-print-current-symbol-info)
-        (advice-remove 'eldoc-mouse--elisp-eldoc-documentation-function #'eldoc-mouse--hover-edloc-function-advise)
-        ;; (advice-remove 'eglot-hover-eldoc-function #'eldoc-mouse--hover-edloc-function-advise)
         (setq-local eldoc-mouse-mouse-overlay
                     (make-overlay
                      (car eldoc-mouse-last-symbol-bounds)
                      (cdr eldoc-mouse-last-symbol-bounds)))
-        (overlay-put eldoc-mouse-mouse-overlay 'face 'highlight))
-      ;; (remove-hook 'eldoc-documentation-functions #'eldoc-mouse-hover-eldoc-function t)
-      ;; (when (fboundp 'eglot--highlight-piggyback)
-        ;; (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t))
-      )))
+        (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection))
+      (dolist (fun-sym eldoc-mouse--eldoc-documentation-functions)
+        (advice-remove fun-sym #'eldoc-mouse--hover-edloc-function-advise))
+      (setq-local eldoc-documentation-functions eldoc-mouse--original-documentation-functions))))
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
@@ -283,7 +246,8 @@ POS is the buffer position under the mouse cursor."
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
   (interactive "e")
-  (let ((pos (posn-point (event-start event))))
+  (when eldoc-mouse-mode
+    (let ((pos (posn-point (event-start event))))
     (when (and pos (number-or-marker-p pos))
       ;; Debounce to avoid spamming eglot.
       (when eldoc-mouse-mouse-timer
@@ -291,21 +255,41 @@ POS is the buffer position under the mouse cursor."
       (setq eldoc-mouse-mouse-timer
             (run-with-idle-timer
              eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at
-             pos)))))
+             pos))))))
 
-(defun eldoc-mouse-hover-eldoc-function (cb)
+(defun eldoc-mouse--eglot-eldoc-documentation-function (cb)
   "Modify the `eglot-hover-eldoc-function'.
 So it won't call `eglot--highlight-piggyback` with `CB`."
-  (if (fboundp 'eglot--highlight-piggyback)
-      (cl-letf (((symbol-function 'eglot--highlight-piggyback)
-                 (lambda (&rest _args) (message ""))))
+  (if (eglot-managed-p)
+      (if (fboundp 'eglot--highlight-piggyback)
+          (cl-letf (((symbol-function 'eglot--highlight-piggyback)
+                     (lambda (&rest _args) (message ""))))
+            (eglot-hover-eldoc-function cb))
         (eglot-hover-eldoc-function cb))
-    (eglot-hover-eldoc-function cb)))
+    nil))
+
+(defun eldoc-mouse--elisp-eldoc-documentation-function (_cb)
+  "The `eldoc-documentation-functions' implementation for elisp."
+  (if (eq major-mode 'emacs-lisp-mode)
+      (let ((sym (symbol-at-point)))
+        (cond
+         ;; If the symbol is a function
+         ((and sym (fboundp sym))
+          (documentation sym))
+         ;; If the symbol is a variable
+         ((and sym (boundp sym))
+          (let ((doc (documentation-property sym 'variable-documentation)))
+            (if doc
+                doc
+              nil)))
+         ;; If no symbol or not a function/variable
+         (t nil)))
+    nil))
 
 (defun eldoc-mouse--hover-edloc-function-advise (orig-fn fn)
   "Wrap FN argument of ORIG-FN so that it append indentifier'."
   (let ((result (funcall orig-fn
-           (lambda (s @rest r)
+           (lambda (s &rest r)
              (funcall fn (if (and s (not (string-empty-p (string-trim s))))
                              (concat s eldoc-mouse--doc-identifier)
                            s) r)))))
@@ -362,22 +346,6 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
   (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
   (add-hook 'post-command-hook #'eldoc-mouse--post-command-hook nil t)
   (add-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook nil t))
-
-(defun eldoc-mouse--elisp-eldoc-documentation-function (_cb)
-  "The `eldoc-documentation-functions' implementation for elisp."
-  (let ((sym (symbol-at-point)))
-    (cond
-     ;; If the symbol is a function
-     ((and sym (fboundp sym))
-      (documentation sym))
-     ;; If the symbol is a variable
-     ((and sym (boundp sym))
-      (let ((doc (documentation-property sym 'variable-documentation)))
-        (if doc
-            doc
-          nil)))
-     ;; If no symbol or not a function/variable
-     (t nil))))
 
 (provide 'eldoc-mouse)
 
