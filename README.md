@@ -88,7 +88,7 @@ Contributing
 Feel free to open issues and pull requests for improvements. If you encounter any bugs or have feature requests, please create an issue on the GitHub Issues page.
 ## TODO 
 * make moving mouse to the posframe easier, currently, it requires moving mouse quickly and with a click.
-* make showing document for mouse hover more generic, not only for eglot managed buffers,  but also for buffers that it makes sense to show something on a posframe for mouse hover. (truly lives up to its name)
+* *(done)* make showing document for mouse hover more generic, not only for eglot managed buffers,  but also for buffers that it makes sense to show something on a posframe for mouse hover. (truly lives up to its name)
 * *(done)* an interactive command to popup document on a posframe for the symbol of the cursor.
 
 ## Acknowledgments
