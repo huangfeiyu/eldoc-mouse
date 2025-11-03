@@ -28,15 +28,15 @@
 ;;; Commentary:
 
 ;; This package enhances eldoc' by displaying documentation in a child frame
-;; when the mouse hovers over a symbol.  It integrates with posframe' for popup 
-;; documentation. Enable it in buffers that you want to show documentation using
+;; when the mouse hovers over a symbol.  It integrates with posframe' for popup
+;; documentation.  Enable it in buffers that you want to show documentation using
 ;; eldoc for the symbol under the mouse cursor.
 
 ;; To use, ensure posframe is installed, then add the following:
 
 ;; The following two lines are both optional, but you would like to add at least one of them to your Emacs configuration.
-;; (use-package eldoc-mouse :hook (eglot-managed-mode emacs-lisp-mode)) ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers.
-;; (global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor) ;; replace <f1> <f1> to a key you like. Displaying document on a popup when you press a key.
+;; (use-package eldoc-mouse :hook (eglot-managed-mode emacs-lisp-mode)) ;; enable mouse hover for eglot managed buffers, and Emacs Lisp buffers.
+;; (global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor) ;; replace <f1> <f1> to a key you like.  Displaying document on a popup when you press a key.
 
 ;; to your Emacs configuration.
 
@@ -160,8 +160,7 @@ no limit, the popup may affect writing."
     ;; And here, we want to keep the highlight at cursor.
     ;; See details:
     ;; https://cgit.git.savannah.gnu.org/cgit/emacs.git/commit/?id=60166a419f601b413db86ddce186cc387e8ec269
-    (when (fboundp 'eglot--highlight-piggyback)
-      (add-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback nil t))))
+    (add-hook 'eldoc-documentation-functions #'eldoc-mouse--eglot-highlight nil t)))
 
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in buffers."
@@ -171,9 +170,7 @@ no limit, the popup may affect writing."
 
   ;; Optimization for eglot managed buffers.
   (when (eglot-managed-p)
-    (when (fboundp 'eglot--highlight-piggyback)
-      (remove-hook 'eldoc-documentation-functions #'eglot--highlight-piggyback t))
-
+    (remove-hook 'eldoc-documentation-functions #'eldoc-mouse--eglot-highlight t)
     (unless (memq #'eglot-signature-eldoc-function eldoc-documentation-functions)
       (add-hook 'eldoc-documentation-functions #'eglot-signature-eldoc-function nil t))
     (unless (memq #'eglot-hover-eldoc-function eldoc-documentation-functions)
@@ -290,8 +287,16 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
          (t nil)))
     nil))
 
+(defun eldoc-mouse--eglot-highlight (cb)
+  "Wrap eglot's highlight function to check if buffer is managed by eglot.
+Argument CB is the callback function."
+  (if (and (fboundp 'eglot--highlight-piggyback) (eglot-managed-p))
+      (eglot--highlight-piggyback cb)
+    nil)
+  )
+
 (defun eldoc-mouse--hover-edloc-function-advise (orig-fn fn)
-  "Wrap FN argument of ORIG-FN so that it append indentifier'."
+  "Wrap FN argument of ORIG-FN so that it append indentifier."
   (let ((result (funcall orig-fn
            (lambda (s &rest r)
              (funcall fn (if (and s (not (string-empty-p (string-trim s))))
