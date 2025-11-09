@@ -7,6 +7,7 @@
 <video src="https://github.com/user-attachments/assets/5622cfd2-de0c-46e8-9276-d67615671932" controls></video>
 
 ## Features
+- **It is specifically designed for mouse hover interactions and has a small codebase**.
 - Displays documentation in a popup when hovering over symbols.
 - Integrates with `posframe` for popup documentation.
 - Support moving mouse to the popup by move mouse on it and click.
