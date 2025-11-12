@@ -76,6 +76,11 @@ no limit, the popup may affect writing."
   :type 'number
   :group 'eldoc-mouse)
 
+(defcustom eldoc-mouse-posframe-border-width 5
+  "The width of the posframe border."
+  :type 'number
+  :group 'eldoc-mouse)
+
 (defcustom eldoc-mouse-posframe-buffer-name "*doc-posframe-buffer*"
   "The name of the hidden buffer used by posframe."
   :type 'string
@@ -349,7 +354,7 @@ Argument CB is the callback function."
    :max-width eldoc-mouse-posframe-max-width
    :min-height eldoc-mouse-posframe-min-height
    :max-height eldoc-mouse-posframe-max-height
-   :border-width 1
+   :border-width eldoc-mouse-posframe-border-width
    :border-color border-color
    :string doc)
   (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
