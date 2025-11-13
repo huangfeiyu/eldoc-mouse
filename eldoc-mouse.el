@@ -76,7 +76,7 @@ no limit, the popup may affect writing."
   :type 'number
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-border-width 5
+(defcustom eldoc-mouse-posframe-border-width 1
   "The width of the posframe border."
   :type 'number
   :group 'eldoc-mouse)
