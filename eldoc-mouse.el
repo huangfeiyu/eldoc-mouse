@@ -81,6 +81,17 @@ no limit, the popup may affect writing."
   :type 'number
   :group 'eldoc-mouse)
 
+(defcustom eldoc-mouse-posframe-border-color (face-foreground 'default)
+  "The color of the posframe border."
+  :type 'string
+  :group 'eldoc-mouse)
+
+(defcustom eldoc-mouse-posframe-override-parameters '((drag-internal-border     . t))
+  "This is very powful, *all* the valid frame parameters
+used by posframe’s frame can be overridden by it."
+  :type '(alist :key-type symbol :value-type t)
+  :group 'eldoc-mouse)
+
 (defcustom eldoc-mouse-posframe-buffer-name "*doc-posframe-buffer*"
   "The name of the hidden buffer used by posframe."
   :type 'string
@@ -338,11 +349,11 @@ Argument CB is the callback function."
                  (buffer-string)))
               (border-color (face-foreground 'default)))
           (when text
-            (eldoc-mouse--pop-doc (replace-regexp-in-string (regexp-quote eldoc-mouse--doc-identifier) "" text) border-color))))
+            (eldoc-mouse--pop-doc (replace-regexp-in-string (regexp-quote eldoc-mouse--doc-identifier) "" text)))))
       ;; non-nil => suppress other display functions.
       t)))
 
-(defun eldoc-mouse--pop-doc (doc border-color)
+(defun eldoc-mouse--pop-doc (doc)
   "Pop up the document DOC on posframe with BORDER-COLOR."
   (when (and eldoc-mouse--original-display-functions (not eldoc-mouse-mode))
     (setq-local eldoc-display-functions eldoc-mouse--original-display-functions)
@@ -355,7 +366,8 @@ Argument CB is the callback function."
    :min-height eldoc-mouse-posframe-min-height
    :max-height eldoc-mouse-posframe-max-height
    :border-width eldoc-mouse-posframe-border-width
-   :border-color border-color
+   :border-color eldoc-mouse-posframe-border-color
+   :override-parameters eldoc-mouse-posframe-override-parameters
    :string doc)
   (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
   (add-hook 'post-command-hook #'eldoc-mouse--post-command-hook nil t)
