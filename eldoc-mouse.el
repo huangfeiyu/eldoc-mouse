@@ -87,9 +87,8 @@ no limit, the popup may affect writing."
   :group 'eldoc-mouse)
 
 (defcustom eldoc-mouse-posframe-override-parameters '((drag-internal-border     . t))
-  "This is very powful, *all* the valid frame parameters
-used by posframe’s frame can be overridden by it."
-  :type '(alist :key-type symbol :value-type t)
+  "This is very powful, *all* the valid frame parameters used by posframe’s frame can be overridden by it."
+  :type '(alist :key-type symbol :value-type (choice integer boolean))
   :group 'eldoc-mouse)
 
 (defcustom eldoc-mouse-posframe-buffer-name "*doc-posframe-buffer*"
@@ -346,8 +345,7 @@ Argument CB is the callback function."
       (when eldoc-buffer
         (let ((text
                (with-current-buffer eldoc-buffer
-                 (buffer-string)))
-              (border-color (face-foreground 'default)))
+                 (buffer-string))))
           (when text
             (eldoc-mouse--pop-doc (replace-regexp-in-string (regexp-quote eldoc-mouse--doc-identifier) "" text)))))
       ;; non-nil => suppress other display functions.
