@@ -358,6 +358,7 @@ Argument CB is the callback function."
     (setq-local eldoc-mouse--original-display-functions nil))
   (posframe-show
    eldoc-mouse-posframe-buffer-name
+   :initialize (lambda () (visual-line-mode t))
    :position (car eldoc-mouse-last-symbol-bounds)
    :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
    :max-width eldoc-mouse-posframe-max-width
