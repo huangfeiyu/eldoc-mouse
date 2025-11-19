@@ -91,8 +91,9 @@ no limit, the popup may affect writing."
   :type '(alist :key-type symbol :value-type (choice integer boolean))
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-buffer-name "*doc-posframe-buffer*"
-  "The name of the hidden buffer used by posframe."
+(defcustom eldoc-mouse-posframe-buffer-name " *doc-posframe-buffer*"
+  "The name of the hidden buffer used by posframe.
+A leading space make the buffer hidden."
   :type 'string
   :group 'eldoc-mouse)
 
@@ -334,7 +335,7 @@ Argument CB is the callback function."
 (defun eldoc-mouse-display-in-posframe (docs _interactive)
   "Display `DOCS` STRING in a posframe at the current mouse position."
   (when (and docs (string-match-p (regexp-quote eldoc-mouse--doc-identifier) (car (car docs))))
-    ;; Output the document for *eldoc* buffer.
+    (get-buffer-create eldoc-mouse-posframe-buffer-name)
     (let* ((eldoc-buffer
             (get-buffer
              (car
