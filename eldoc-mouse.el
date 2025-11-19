@@ -59,17 +59,17 @@ that the mouse hover on a symbol before
   :type 'number
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-max-width 70
+(defcustom eldoc-mouse-posframe-max-width 120
   "The maximum number of characters the posframe may contain in each line."
   :type 'number
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-min-height 3
+(defcustom eldoc-mouse-posframe-min-height 1
   "The minimum number of lines posframe may contain."
   :type 'number
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-max-height 15
+(defcustom eldoc-mouse-posframe-max-height 30
   "The maximum number of lines posframe may contain.
 It could be nil, means no limit, in practical, I found that set this too big or
 no limit, the popup may affect writing."
