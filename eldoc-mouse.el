@@ -76,6 +76,11 @@ no limit, the popup may affect writing."
   :type 'number
   :group 'eldoc-mouse)
 
+(defcustom eldoc-mouse-posframe-fringe-width 8
+  "The width of the posframe fringe."
+  :type 'number
+  :group 'eldoc-mouse)
+
 (defcustom eldoc-mouse-posframe-border-width 1
   "The width of the posframe border."
   :type 'number
@@ -359,7 +364,7 @@ Argument CB is the callback function."
     (setq-local eldoc-mouse--original-display-functions nil))
   (posframe-show
    eldoc-mouse-posframe-buffer-name
-   :initialize (lambda () (visual-line-mode t))
+   :initialize #'eldoc-mouse--posframe-init
    :position (car eldoc-mouse-last-symbol-bounds)
    :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
    :max-width eldoc-mouse-posframe-max-width
@@ -367,11 +372,20 @@ Argument CB is the callback function."
    :max-height eldoc-mouse-posframe-max-height
    :border-width eldoc-mouse-posframe-border-width
    :border-color eldoc-mouse-posframe-border-color
+   :left-fringe eldoc-mouse-posframe-fringe-width
+   :right-fringe eldoc-mouse-posframe-fringe-width
    :override-parameters eldoc-mouse-posframe-override-parameters
    :string doc)
   (advice-add 'keyboard-quit :before #'eldoc-mouse--hide-posframe)
-  (add-hook 'post-command-hook #'eldoc-mouse--post-command-hook nil t)
-  (add-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook nil t))
+  (add-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook nil t)
+  (add-hook 'post-command-hook #'eldoc-mouse--post-command-hook nil t))
+
+(defun eldoc-mouse--posframe-init ()
+  "Initialize the posframe buffer."
+  (visual-line-mode t)
+  (setq-local fringe-indicator-alist
+              (assq-delete-all 'continuation fringe-indicator-alist))
+  (setq-local visual-line-fringe-indicators '(nil nil)))
 
 (provide 'eldoc-mouse)
 
