@@ -55,6 +55,8 @@
 (require 'eglot)
 (require 'cl-lib)
 
+(declare-function eglot-highlight-eldoc-function "eglot")
+
 (defgroup eldoc-mouse nil
   "Dispay document for mouse hover."
   :prefix "eldoc-mouse-"
@@ -99,8 +101,11 @@ no limit, the popup may affect writing."
   :type 'string
   :group 'eldoc-mouse)
 
-(defcustom eldoc-mouse-posframe-override-parameters '((drag-internal-border     . t))
-  "This is very powful, *all* the valid frame parameters used by posframe’s frame can be overridden by it."
+(defcustom eldoc-mouse-posframe-override-parameters
+  '((drag-internal-border . t))
+  "Specify override parameters for the posframe's frame.
+This variable allows any valid frame parameters used by posframe's frame
+to be overridden."
   :type '(alist :key-type symbol :value-type (choice integer boolean))
   :group 'eldoc-mouse)
 
