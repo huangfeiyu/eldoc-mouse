@@ -37,7 +37,7 @@ Add the following in your Emacs configuration:
 ```
 ### Supported modes
 * eglot-managed-mode
-* emacs-list-mode
+* emacs-lisp-mode
 ## Customization
 
 You can customize the behavior of eldoc-mouse by adjusting the variables. For instance, you can adjust the delay time between mouse hover and displaying the documentation by changing the eldoc-mouse-mouse-timer settings.
