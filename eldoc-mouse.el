@@ -102,6 +102,9 @@ A leading space make the buffer hidden."
   :type 'string
   :group 'eldoc-mouse)
 
+(defvar eldoc-mouse-mode-map (make-sparse-keymap)
+  "The keymap of `eldoc-mouse-mode'.")
+
 (defvar eldoc-mouse-mouse-timer nil
   "Idle timer for mouse hover eldoc.")
 
@@ -125,6 +128,7 @@ A leading space make the buffer hidden."
 (define-minor-mode eldoc-mouse-mode
   "Toggle the `eldoc-mouse-mode'."
   :lighter " eldoc-mouse"
+  :keymap eldoc-mouse-mode-map
   (if eldoc-mouse-mode
       (eldoc-mouse-enable)
     (eldoc-mouse-disable)))
