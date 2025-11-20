@@ -30,10 +30,14 @@ You can install `eldoc-mouse` with the following command.
 ## Usage
 ### Enable eldoc-mouse:
 Add the following in your Emacs configuration:
-```
-;; The following two lines are both optional, but you would like to add at least one of them to your Emacs configuration.
-(use-package eldoc-mouse :hook (eglot-managed-mode emacs-lisp-mode)) ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers.
-(global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor) ;; replace <f1> <f1> to a key you like. Displaying document on a popup when you press a key.
+
+``` elisp
+(use-package eldoc-mouse
+  ;; replace <f1> <f1> to a key you like, "C-h ." maybe. Displaying document on a popup when you press a key.
+  :bind (:map eldoc-mouse-mode-map
+         ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
+  ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers. ;; optional
+  :hook (eglot-managed-mode emacs-lisp-mode))
 ```
 ### Supported modes
 * eglot-managed-mode
