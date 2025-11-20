@@ -245,14 +245,14 @@ POS is the buffer position under the mouse cursor."
   (interactive "e")
   (when eldoc-mouse-mode
     (let ((pos (posn-point (event-start event))))
-    (when (and pos (number-or-marker-p pos))
-      ;; Debounce to avoid spamming eglot.
-      (when eldoc-mouse-mouse-timer
-        (cancel-timer eldoc-mouse-mouse-timer))
-      (setq eldoc-mouse-mouse-timer
-            (run-with-idle-timer
-             eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at
-             pos))))))
+      (when (and pos (number-or-marker-p pos))
+        ;; Debounce to avoid spamming eglot.
+        (when eldoc-mouse-mouse-timer
+          (cancel-timer eldoc-mouse-mouse-timer))
+        (setq eldoc-mouse-mouse-timer
+              (run-with-idle-timer
+                 eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at
+                 pos))))))
 
 (defun eldoc-mouse--eglot-eldoc-documentation-function (cb)
   "Modify the `eglot-hover-eldoc-function'.
