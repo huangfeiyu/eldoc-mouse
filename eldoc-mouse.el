@@ -281,6 +281,8 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
   "Get the eldoc documentation functions defined by eldoc-mouse."
   (let* ((fun-list1 (seq-filter (lambda (f)
                                   (and (not (function-equal f #'eglot-hover-eldoc-function))
+                                       (or (not (fboundp 'eglot-highlight-eldoc-function))
+                                           (not (function-equal f #'eglot-highlight-eldoc-function)))
                                        (not (function-equal f #'eglot-signature-eldoc-function))))
                                 eldoc-documentation-functions))
          (fun-list2 (append eldoc-mouse--eldoc-documentation-functions fun-list1)))
