@@ -39,6 +39,13 @@ Add the following in your Emacs configuration:
   ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers. ;; optional
   :hook (eglot-managed-mode emacs-lisp-mode))
 ```
+Or if you want to show document only when you press a key, and don't want to enable mouse hover, then:
+
+``` elisp
+(use-package eldoc-mouse)
+;; replace <f1> <f1> to a key you like.  Displaying document on a popup when you press a key.
+(global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor)
+```
 ### Supported modes
 * eglot-managed-mode
 * emacs-lisp-mode
