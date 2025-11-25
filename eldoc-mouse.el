@@ -2,12 +2,13 @@
 
 ;; Copyright (C) 2025 Huang Feiyu
 
-;; Author: Huang Feiyu sibadake1@163.com
+;; Author: Huang Feiyu <sibadake1@163.com>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "30.1") (posframe "1.4.0") (eglot "1.8"))
-;; Keywords: tools, languages, convenience, emacs, mouse, hover
+;; Package-Requires: ((emacs "27.1") (posframe "1.4.0") (eglot "1.8"))
+;; Keywords: tools, languages, convenience, mouse, hover
 ;; URL: https://github.com/huangfeiyu/eldoc-mouse
-;;
+;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;; This file is part of eldoc-mouse.
 ;;
 ;; eldoc-mouse is free software; you can redistribute it and/or
@@ -22,37 +23,38 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with eldoc-mouse; if not, see <http://www.gnu.org/licenses/>.
-;;
-;; SPDX-License-Identifier: GPL-3.0-or-later
-;;
 ;;; Commentary:
 
-;; This package enhances eldoc' by displaying documentation in a child frame
-;; when the mouse hovers over a symbol.  It integrates with posframe' for popup
+;; This package enhances `eldoc' by displaying documentation in a child frame
+;; when the mouse hovers over a symbol.  It integrates with `posframe' for popup
 ;; documentation.  Enable it in buffers that you want to show documentation using
 ;; eldoc for the symbol under the mouse cursor.
 
 ;; To use, ensure posframe is installed, then add the following:
-;; (use-package eldoc-mouse
-;;   ;; replace <f1> <f1> to a key you like, "C-h ." maybe. Displaying document on a popup when you press a key.
-;;   :bind (:map eldoc-mouse-mode-map
-;;          ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
-;;   ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers. ;; optional
-;;   :hook (eglot-managed-mode emacs-lisp-mode))
+;;
+;;   (use-package eldoc-mouse :ensure t
+;;     ;; replace <f1> <f1> to a key you like, "C-h ." maybe.
+;;     ;; Displaying document on a popup when you press a key.
+;;     :bind (:map eldoc-mouse-mode-map
+;;            ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
+;;     ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers (optional)
+;;     :hook (eglot-managed-mode emacs-lisp-mode))
 
-;; Or if you simply want to enable mouse hover for all buffers where eldoc-mode is available as a minor mode, then:
+;; Or if you simply want to enable mouse hover for all buffers where
+;; eldoc-mode is available as a minor mode, then:
 
-;; (use-package eldoc-mouse
-;;   ;; replace <f1> <f1> to a key you like, "C-h ." maybe. Displaying document on a popup when you press a key.
-;;   :bind (:map eldoc-mouse-mode-map
-;;          ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
-;;   :hook eldoc-mode)
+;;   (use-package eldoc-mouse :ensure t
+;;     ;; replace <f1> <f1> to a key you like, "C-h ." maybe. Displaying document on a popup when you press a key.
+;;     :bind (:map eldoc-mouse-mode-map
+;;            ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
+;;     :hook eldoc-mode)
 
-;; Or if you want to show document only when you press a key, and don't want to enable mouse hover, then:
+;; Or if you want to show document only when you press a key, and
+;; don't want to enable mouse hover, then:
 
-;; (use-package eldoc-mouse)
-;; ;; replace <f1> <f1> to a key you like.  Displaying document on a popup when you press a key.
-;; (global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor)
+;;   (use-package eldoc-mouse :ensure t)
+;;   ;; replace <f1> <f1> to a key you like.  Displaying document on a popup when you press a key.
+;;   (global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor)
 
 ;; to your Emacs configuration.
 
@@ -61,9 +63,7 @@
 (require 'eldoc)
 (require 'posframe)
 (require 'eglot)
-(require 'cl-lib)
-
-(declare-function eglot-highlight-eldoc-function "eglot")
+(eval-when-compile (require 'cl-lib))
 
 (defgroup eldoc-mouse nil
   "Dispay document for mouse hover."
@@ -74,59 +74,50 @@
   "The minimum amount of seconds.
 that the mouse hover on a symbol before
    triggering eldoc to get the document of the symbol, default to 0.2 second."
-  :type 'number
-  :group 'eldoc-mouse)
+  :type 'number)
 
 (defcustom eldoc-mouse-posframe-max-width 120
   "The maximum number of characters the posframe may contain in each line."
-  :type 'number
-  :group 'eldoc-mouse)
+  :type 'natnum)
 
 (defcustom eldoc-mouse-posframe-min-height 1
   "The minimum number of lines posframe may contain."
-  :type 'number
-  :group 'eldoc-mouse)
+  :type 'natnum)
 
 (defcustom eldoc-mouse-posframe-max-height 30
   "The maximum number of lines posframe may contain.
 It could be nil, means no limit, in practical, I found that set this too big or
 no limit, the popup may affect writing."
-  :type 'number
-  :group 'eldoc-mouse)
+  :type 'natnum)
 
 (defcustom eldoc-mouse-posframe-fringe-width 8
   "The width of the posframe fringe."
-  :type 'number
-  :group 'eldoc-mouse)
+  :type 'natnum)
 
 (defcustom eldoc-mouse-posframe-border-width 1
   "The width of the posframe border."
-  :type 'number
-  :group 'eldoc-mouse)
+  :type 'natnum)
 
 (defcustom eldoc-mouse-posframe-border-color (face-foreground 'default)
   "The color of the posframe border."
-  :type 'string
-  :group 'eldoc-mouse)
+  :type 'string)
 
 (defcustom eldoc-mouse-posframe-override-parameters
   '((drag-internal-border . t))
   "Specify override parameters for the posframe's frame.
 This variable allows any valid frame parameters used by posframe's frame
 to be overridden."
-  :type '(alist :key-type symbol :value-type (choice integer boolean))
-  :group 'eldoc-mouse)
+  :type '(alist :key-type symbol :value-type (choice integer boolean)))
 
 (defcustom eldoc-mouse-posframe-buffer-name " *doc-posframe-buffer*"
   "The name of the hidden buffer used by posframe.
 A leading space make the buffer hidden."
-  :type 'string
-  :group 'eldoc-mouse)
+  :type 'string)
 
 (defvar eldoc-mouse-mode-map (make-sparse-keymap)
   "The keymap of `eldoc-mouse-mode'.")
 
-(defvar eldoc-mouse-mouse-timer nil
+(defvar eldoc-mouse--mouse-timer nil
   "Idle timer for mouse hover eldoc.")
 
 (defvar-local eldoc-mouse-mouse-overlay nil
@@ -161,13 +152,13 @@ A leading space make the buffer hidden."
   (eldoc-mouse--hide-posframe)
   (when-let* ((symbol-bounds (bounds-of-thing-at-point 'symbol))
               (eldoc-documentation-functions (eldoc-mouse--eldoc-documentation-functions)))
-    (setq-local eldoc-mouse-last-symbol-bounds symbol-bounds)
-    (when (not eldoc-mouse-mode)
+    (setq eldoc-mouse-last-symbol-bounds symbol-bounds)
+    (unless eldoc-mouse-mode
       (unless eldoc-mouse--original-display-functions
-        (setq-local eldoc-mouse--original-display-functions eldoc-display-functions))
+        (setq eldoc-mouse--original-display-functions eldoc-display-functions))
       (setq-local eldoc-display-functions
                   (append
-                   eldoc-display-functions '(eldoc-mouse-display-in-posframe))))
+                   eldoc-display-functions (list #'eldoc-mouse-display-in-posframe))))
     (setq eldoc--last-request-state nil)
     (eldoc-print-current-symbol-info)))
 
@@ -175,10 +166,10 @@ A leading space make the buffer hidden."
   "Enable eldoc-mouse in buffers."
   ;; Enable mouse tracking.
   (setq track-mouse t)
-  (setq-local eldoc-mouse--original-display-functions eldoc-display-functions)
+  (setq eldoc-mouse--original-display-functions eldoc-display-functions)
   (setq-local eldoc-display-functions
               (append
-               eldoc-display-functions '(eldoc-mouse-display-in-posframe)))
+               eldoc-display-functions (list #'eldoc-mouse-display-in-posframe)))
   (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
 
 (defun eldoc-mouse-disable ()
@@ -187,9 +178,9 @@ A leading space make the buffer hidden."
     (setq-local eldoc-display-functions
                 eldoc-mouse--original-display-functions))
 
-  (when eldoc-mouse-mouse-timer
-    (cancel-timer eldoc-mouse-mouse-timer)
-    (setq eldoc-mouse-mouse-timer nil))
+  (when eldoc-mouse--mouse-timer
+    (cancel-timer eldoc-mouse--mouse-timer)
+    (setq eldoc-mouse--mouse-timer nil))
   (eldoc-mouse--hide-posframe)
   (local-unset-key [mouse-movement])
   (when (y-or-n-p "eldoc-mouse-mode has been turned off.  Also disable mouse-tracking (may impact other modes)?")
@@ -212,8 +203,7 @@ Support close the popup when user switch buffer."
 (defun eldoc-mouse-show-doc-at (pos)
   "Ask eldoc to show documentation for symbol at POS.
 POS is the buffer position under the mouse cursor."
-  (when (and pos
-             (number-or-marker-p pos)
+  (when (and (number-or-marker-p pos)
              (not
               (eldoc-mouse-is-mouse-hovering-posframe?
                eldoc-mouse-posframe-buffer-name))
@@ -251,53 +241,52 @@ POS is the buffer position under the mouse cursor."
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
   (interactive "e")
-  (when eldoc-mouse-mode
-    (let ((pos (posn-point (event-start event))))
-      (when (and pos (number-or-marker-p pos))
-        ;; Debounce to avoid spamming eglot.
-        (when eldoc-mouse-mouse-timer
-          (cancel-timer eldoc-mouse-mouse-timer))
-        (setq eldoc-mouse-mouse-timer
-              (run-with-idle-timer
-                 eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at
-                 pos))))))
+  (when-let* ((_ eldoc-mouse-mode)
+	          (pos (posn-point (event-start event)))
+	          (_ (number-or-marker-p pos)))
+    ;; Debounce to avoid spam.
+    (when eldoc-mouse--mouse-timer
+      (cancel-timer eldoc-mouse--mouse-timer))
+    (setq eldoc-mouse--mouse-timer
+          (run-with-idle-timer
+           eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at pos))))
 
 (defun eldoc-mouse--eglot-eldoc-documentation-function (cb)
   "Modify the `eglot-hover-eldoc-function'.
 So it won't call `eglot--highlight-piggyback` with `CB`."
-  (if (eglot-managed-p)
-      (if (fboundp 'eglot--highlight-piggyback)
-          (cl-letf (((symbol-function 'eglot--highlight-piggyback)
-                     (lambda (&rest _args) (message ""))))
-            (eglot-hover-eldoc-function cb))
-        (eglot-hover-eldoc-function cb))
-    nil))
+  (when (eglot-managed-p)
+    (if (fboundp 'eglot--highlight-piggyback)
+        (cl-letf (((symbol-function 'eglot--highlight-piggyback)
+                   (lambda (&rest _args) (message ""))))
+          (eglot-hover-eldoc-function cb))
+      (eglot-hover-eldoc-function cb))))
 
 (defun eldoc-mouse--elisp-eldoc-documentation-function (_cb)
   "The `eldoc-documentation-functions' implementation for elisp."
-  (if (eq major-mode 'emacs-lisp-mode)
-      (let ((sym (symbol-at-point)))
-        (cond
-         ;; If the symbol is a function
-         ((and sym (fboundp sym))
-          (documentation sym))
-         ;; If the symbol is a variable
-         ((and sym (boundp sym))
-          (let ((doc (documentation-property sym 'variable-documentation)))
-            (if doc
-                doc
-              nil)))
-         ;; If no symbol or not a function/variable
-         (t nil)))
-    nil))
+  (when (eq major-mode 'emacs-lisp-mode)
+    (let ((sym (symbol-at-point)))
+      (cond
+       ;; If the symbol is a function
+       ((and sym (fboundp sym))
+        (documentation sym))
+       ;; If the symbol is a variable
+       ((and sym (boundp sym))
+        (let ((doc (documentation-property sym 'variable-documentation)))
+          (if doc
+              doc
+            nil)))
+       ;; If no symbol or not a function/variable
+       (t nil)))))
 
 (defun eldoc-mouse--hover-edloc-function-advise (orig-fn fn)
   "Wrap FN argument of ORIG-FN so that it append indentifier."
   (let ((result (funcall orig-fn
-           (lambda (s &rest r)
-             (funcall fn (if (and s (not (string-empty-p (string-trim s))))
-                             (concat s eldoc-mouse--doc-identifier)
-                           s) r)))))
+                         (lambda (s &rest r)
+                           (funcall fn (if (and s (not (string-empty-p (string-trim s))))
+                                           (concat s eldoc-mouse--doc-identifier)
+                                         s)
+                                    r)))))
+    ;; Append the identifier only when the result is a string, otherwise, keep it as it is.
     (if (stringp result)
         (concat result eldoc-mouse--doc-identifier)
       result)))
@@ -322,29 +311,25 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
          (frame (get-buffer-window posframe)))
     ;; keep the child frame when it is clicked, need a better
     ;; way to determine if the mouse is over the child frame.
-    (if (and posframe (windowp frame))
-        t
-      nil)))
+    (and posframe (windowp frame) t)))
 
 (defun eldoc-mouse-display-in-posframe (docs _interactive)
   "Display `DOCS` STRING in a posframe at the current mouse position."
   (when (and docs (string-match-p (regexp-quote eldoc-mouse--doc-identifier) (car (car docs))))
+    ;; Make sure the buffer existed before popup to avoid change buffer list by popup.
     (get-buffer-create eldoc-mouse-posframe-buffer-name)
-    (let* ((eldoc-buffer
-            (get-buffer
-             (car
-              (seq-filter
-               (lambda (buf)
-                 (string-match-p ".*\\*eldoc.*\\*" (buffer-name buf)))
-               (buffer-list))))))
-      (when eldoc-buffer
-        (let ((text
-               (with-current-buffer eldoc-buffer
-                 (buffer-string))))
-          (when text
-            (eldoc-mouse--pop-doc (replace-regexp-in-string (regexp-quote eldoc-mouse--doc-identifier) "" text)))))
-      ;; non-nil => suppress other display functions.
-      t)))
+    (when-let* ((eldoc-buffer
+		         (get-buffer
+		          (seq-find
+		            (lambda (buf)
+                      (string-match-p ".*\\*eldoc.*\\*" (buffer-name buf)))
+		            (buffer-list))))
+		        (text
+		         (with-current-buffer eldoc-buffer
+                   (buffer-string))))
+      (eldoc-mouse--pop-doc (replace-regexp-in-string (regexp-quote eldoc-mouse--doc-identifier) "" text)))
+    ;; non-nil => suppress other display functions.
+    t))
 
 (defun eldoc-mouse--pop-doc (doc)
   "Pop up the document DOC on posframe with BORDER-COLOR."
