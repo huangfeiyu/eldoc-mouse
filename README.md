@@ -96,7 +96,7 @@ You can customize the behavior of eldoc-mouse by adjusting the variables. For in
 
 ## Requirements
 
-    Emacs 30.1 or higher
+    Emacs 27.1 or higher
     posframe version 1.4.0 or higher
     eglot version 1.8 or higher
 
