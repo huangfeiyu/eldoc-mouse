@@ -170,7 +170,7 @@ A leading space make the buffer hidden."
   (setq-local eldoc-display-functions
               (append
                eldoc-display-functions (list #'eldoc-mouse-display-in-posframe)))
-  (local-set-key [mouse-movement] #'eldoc-mouse-doc-on-mouse))
+  (define-key eldoc-mouse-mode-map [mouse-movement] 'eldoc-mouse-doc-on-mouse))
 
 (defun eldoc-mouse-disable ()
   "Disable eldoc-mouse in buffers."
@@ -182,8 +182,7 @@ A leading space make the buffer hidden."
     (cancel-timer eldoc-mouse--mouse-timer)
     (setq eldoc-mouse--mouse-timer nil))
   (eldoc-mouse--hide-posframe)
-  (local-unset-key [mouse-movement])
-  (when (y-or-n-p "eldoc-mouse-mode has been turned off.  Also disable mouse-tracking (may impact other modes)?")
+  (when (y-or-n-p "eldoc-mouse-mode has been turned off. Also disable mouse-tracking (may impact other modes)?")
     (setq track-mouse nil)))
 
 (defun eldoc-mouse--post-command-hook ()
