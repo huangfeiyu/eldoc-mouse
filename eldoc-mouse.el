@@ -191,7 +191,8 @@ A leading space make the buffer hidden."
 (defun eldoc-mouse--post-command-hook ()
   "The hook of post-command used by eldoc-mouse.
 Support close the popup when the cursor is moved away."
-  (when (not (eq 'eldoc-mouse-doc-on-mouse this-command))
+  (when (and (not (eq 'eldoc-mouse-doc-on-mouse this-command))
+             (not (eldoc-mouse-is-mouse-hovering-posframe)))
     (let ((pos (point)))
       (when (or (< pos (car eldoc-mouse-last-symbol-bounds))
                 (> pos (cdr eldoc-mouse-last-symbol-bounds)))
@@ -206,9 +207,7 @@ Support close the popup when user switch buffer."
   "Ask eldoc to show documentation for symbol at POS.
 POS is the buffer position under the mouse cursor."
   (when (and (number-or-marker-p pos)
-             (not
-              (eldoc-mouse-is-mouse-hovering-posframe?
-               eldoc-mouse-posframe-buffer-name))
+             (not (eldoc-mouse-is-mouse-hovering-posframe))
              (or (null eldoc-mouse-last-symbol-bounds)
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
@@ -307,9 +306,9 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
                             fun))
             fun-list2)))
 
-(defun eldoc-mouse-is-mouse-hovering-posframe? (posframe-name)
+(defun eldoc-mouse-is-mouse-hovering-posframe ()
   "Check if the mouse is hovering over the given posframe `POSFRAME-NAME'."
-  (let* ((posframe (get-buffer posframe-name)) ;; Get the posframe buffer
+  (let* ((posframe (get-buffer eldoc-mouse-posframe-buffer-name)) ;; Get the posframe buffer
          (frame (get-buffer-window posframe)))
     ;; keep the child frame when it is clicked, need a better
     ;; way to determine if the mouse is over the child frame.
