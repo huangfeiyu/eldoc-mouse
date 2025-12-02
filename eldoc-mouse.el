@@ -37,14 +37,14 @@
 ;;     ;; Displaying document on a popup when you press a key.
 ;;     :bind (:map eldoc-mouse-mode-map
 ;;            ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
-;;     ;; enable mouse hover for eglot managed buffers, and emacs lisp buffers (optional)
+;;     ;; enable mouse hover for eglot managed buffers, and Emacs Lisp buffers (optional)
 ;;     :hook (eglot-managed-mode emacs-lisp-mode))
 
 ;; Or if you simply want to enable mouse hover for all buffers where
 ;; eldoc-mode is available as a minor mode, then:
 
 ;;   (use-package eldoc-mouse :ensure t
-;;     ;; replace <f1> <f1> to a key you like, "C-h ." maybe. Displaying document on a popup when you press a key.
+;;     ;; replace <f1> <f1> to a key you like, "C-h ." maybe.  Displaying document on a popup when you press a key.
 ;;     :bind (:map eldoc-mouse-mode-map
 ;;            ("<f1> <f1>" . eldoc-mouse-pop-doc-at-cursor)) ;; optional
 ;;     :hook eldoc-mode)
@@ -132,6 +132,9 @@ A leading space make the buffer hidden."
 (defvar-local eldoc-mouse--doc-identifier "*^eldoc-mouse*^"
   "The identifier used for distinguish the doc triggered by eldoc-mouse.")
 
+(defvar-local eldoc-mouse--original-track-mouse nil
+  "The original buffer local value of variable `track-mouse'.")
+
 (defvar-local eldoc-mouse--eldoc-documentation-functions
     (list #'eldoc-mouse--eglot-eldoc-documentation-function #'eldoc-mouse--elisp-eldoc-documentation-function)
   "The `eldoc-documentation-functions' for `eldoc-mouse-mode'.")
@@ -165,7 +168,8 @@ A leading space make the buffer hidden."
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in buffers."
   ;; Enable mouse tracking.
-  (setq track-mouse t)
+  (setq eldoc-mouse--original-track-mouse (buffer-local-value 'track-mouse (current-buffer)))
+  (setq-local track-mouse t)
   (setq eldoc-mouse--original-display-functions eldoc-display-functions)
   (setq-local eldoc-display-functions
               (append
@@ -182,8 +186,7 @@ A leading space make the buffer hidden."
     (cancel-timer eldoc-mouse--mouse-timer)
     (setq eldoc-mouse--mouse-timer nil))
   (eldoc-mouse--hide-posframe)
-  (when (y-or-n-p "eldoc-mouse-mode has been turned off. Also disable mouse-tracking (may impact other modes)?")
-    (setq track-mouse nil)))
+  (setq-local track-mouse eldoc-mouse--original-track-mouse))
 
 (defun eldoc-mouse--post-command-hook ()
   "The hook of post-command used by eldoc-mouse.
