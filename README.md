@@ -3,8 +3,7 @@
 # eldoc-mouse
 
 `eldoc-mouse` is an Emacs package that enhances the `eldoc` functionality by displaying documentation in a popup at the mouse point using [posframe](https://github.com/tumashu/posframe) when the mouse hovers over a symbol. It integrates with `posframe` to provide popping up documentation.
-[Eldoc-mouse Demo at Youtube](https://youtu.be/XFAc4WyiJjI)
-<video src="https://github.com/user-attachments/assets/5622cfd2-de0c-46e8-9276-d67615671932" controls></video>
+<video src="https://www.youtube.com/watch?v=NO8818bzwmU" controls></video>
 
 ## Features
 - **It is specifically designed for mouse hover interactions and has a small codebase**.
