@@ -135,9 +135,11 @@ A leading space make the buffer hidden."
 (defvar-local eldoc-mouse--original-track-mouse nil
   "The original buffer local value of variable `track-mouse'.")
 
-(defvar-local eldoc-mouse--eldoc-documentation-functions
+(defvar-local eldoc-mouse-eldoc-documentation-functions
     (list #'eldoc-mouse--eglot-eldoc-documentation-function #'eldoc-mouse--elisp-eldoc-documentation-function)
-  "The `eldoc-documentation-functions' for `eldoc-mouse-mode'.")
+  "The `eldoc-documentation-functions' for `eldoc-mouse-mode'.
+User can define their customized eldoc documentation function, and add to
+this list for specific mode.")
 
 ;;;###autoload
 (define-minor-mode eldoc-mouse-mode
@@ -300,7 +302,7 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
                                            (not (function-equal f #'eglot-highlight-eldoc-function)))
                                        (not (function-equal f #'eglot-signature-eldoc-function))))
                                 eldoc-documentation-functions))
-         (fun-list2 (append eldoc-mouse--eldoc-documentation-functions fun-list1)))
+         (fun-list2 (append eldoc-mouse-eldoc-documentation-functions fun-list1)))
     (mapcar (lambda (fun) (if (functionp fun)
                               (lambda (&rest args) (apply #'eldoc-mouse--hover-edloc-function-advise fun args))
                             fun))
