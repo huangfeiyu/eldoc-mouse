@@ -90,11 +90,15 @@ You can customize the behavior of eldoc-mouse by adjusting the variables. For in
    ```
 2. add the function name to the `eldoc-mouse` variable `eldoc-mouse--eldoc-documentation-functions`. for example:
    ```elisp
-   (defvar-local eldoc-mouse--eldoc-documentation-functions
+   (defvar-local eldoc-mouse-eldoc-documentation-functions
     (list #'eldoc-mouse--eglot-eldoc-documentation-function #'eldoc-mouse--elisp-eldoc-documentation-function)
    "The `eldoc-documentation-functions' for `eldoc-mouse-mode'.")
    ```
 3. submit a pull request. I'd love to merge it.
+4. For modes that is not part of Emacs, pull request is not a choice, instead, you can add your customized function as hook by the following:
+   ```elisp
+   (add-hook 'eldoc-mouse-eldoc-documentation-functions #'your-customized-eldoc-documentation-function nil t)
+   ```
 
 ## Requirements
 
