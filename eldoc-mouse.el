@@ -135,6 +135,9 @@ A leading space make the buffer hidden."
 (defvar-local eldoc-mouse--original-track-mouse nil
   "The original buffer local value of variable `track-mouse'.")
 
+(defvar-local eldoc-mouse-interested-thing-function nil
+  "The function which determines if the current thing at point is interested.")
+
 (defvar-local eldoc-mouse-eldoc-documentation-functions
     (list #'eldoc-mouse--eglot-eldoc-documentation-function #'eldoc-mouse--elisp-eldoc-documentation-function)
   "The `eldoc-documentation-functions' for `eldoc-mouse-mode'.
@@ -228,11 +231,13 @@ POS is the buffer position under the mouse cursor."
                    (not (eolp))
                    (not (nth 4 (syntax-ppss))))
           (eldoc-print-current-symbol-info)
-          (setq-local eldoc-mouse-mouse-overlay
-                      (make-overlay
-                       (car eldoc-mouse-last-symbol-bounds)
-                       (cdr eldoc-mouse-last-symbol-bounds)))
-          (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection))))))
+          (when (or (null eldoc-mouse-interested-thing-function)
+                    (funcall eldoc-mouse-interested-thing-function))
+            (setq-local eldoc-mouse-mouse-overlay
+                        (make-overlay
+                         (car eldoc-mouse-last-symbol-bounds)
+                         (cdr eldoc-mouse-last-symbol-bounds)))
+            (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection)))))))
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
