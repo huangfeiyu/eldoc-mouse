@@ -1,3 +1,4 @@
+[![NonGNU ELPA](https://elpa.nongnu.org/nongnu/eldoc-mouse.svg)](https://elpa.nongnu.org/nongnu/eldoc-mouse.html)
 [![melpa badge][melpa-badge]][melpa-link]
 
 # eldoc-mouse
@@ -23,7 +24,7 @@
 
 ## Installation
 
-`eldoc-mouse` is available on [MELPA](https://melpa.org/)
+`eldoc-mouse` is available on both [NonGNU ELPA](https://elpa.nongnu.org/nongnu/eldoc-mouse.html) and  [MELPA](https://melpa.org/)
 
 You can install `eldoc-mouse` with the following command.
 
@@ -99,6 +100,7 @@ You can customize the behavior of eldoc-mouse by adjusting the variables. For in
    ```elisp
    (add-hook 'eldoc-mouse-eldoc-documentation-functions #'your-customized-eldoc-documentation-function nil t)
    ```
+   For example: [Eldoc-mouse-nov.el](https://github.com/huangfeiyu/eldoc-mouse-nov)
 
 ## Requirements
 
