@@ -3,7 +3,7 @@
 ;; Copyright (C) 2025 Huang Feiyu
 
 ;; Author: Huang Feiyu <sibadake1@163.com>
-;; Version: 3.0
+;; Version: 3.0.1
 ;; Package-Requires: ((emacs "27.1") (posframe "1.4.0") (eglot "1.8"))
 ;; Keywords: tools, languages, convenience, mouse, hover
 ;; URL: https://github.com/huangfeiyu/eldoc-mouse
@@ -229,15 +229,15 @@ POS is the buffer position under the mouse cursor."
         ;; https://emacs.stackexchange.com/questions/14269/14270#14270
         (when (and eldoc-mouse-last-symbol-bounds
                    (not (eolp))
-                   (not (nth 4 (syntax-ppss))))
+                   (not (nth 4 (syntax-ppss)))
+                   (or (null eldoc-mouse-interested-thing-function)
+                       (funcall eldoc-mouse-interested-thing-function)))
           (eldoc-print-current-symbol-info)
-          (when (or (null eldoc-mouse-interested-thing-function)
-                    (funcall eldoc-mouse-interested-thing-function))
-            (setq-local eldoc-mouse-mouse-overlay
-                        (make-overlay
-                         (car eldoc-mouse-last-symbol-bounds)
-                         (cdr eldoc-mouse-last-symbol-bounds)))
-            (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection)))))))
+          (setq-local eldoc-mouse-mouse-overlay
+                      (make-overlay
+                       (car eldoc-mouse-last-symbol-bounds)
+                       (cdr eldoc-mouse-last-symbol-bounds)))
+          (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection))))))
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
@@ -304,7 +304,7 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
   (let* ((fun-list1 (seq-filter (lambda (f)
                                   (and (not (function-equal f #'eglot-hover-eldoc-function))
                                        (or (not (fboundp 'eglot-highlight-eldoc-function))
-                                           (not (function-equal f #'eglot-highlight-eldoc-function)))
+                                           (not (with-no-warnings (function-equal f #'eglot-highlight-eldoc-function))))
                                        (not (function-equal f #'eglot-signature-eldoc-function))))
                                 eldoc-documentation-functions))
          (fun-list2 (append eldoc-mouse-eldoc-documentation-functions fun-list1)))
