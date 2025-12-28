@@ -3,7 +3,7 @@
 ;; Copyright (C) 2025 Huang Feiyu
 
 ;; Author: Huang Feiyu <sibadake1@163.com>
-;; Version: 3.0.1
+;; Version: 3.0.2
 ;; Package-Requires: ((emacs "27.1") (posframe "1.4.0") (eglot "1.8"))
 ;; Keywords: tools, languages, convenience, mouse, hover
 ;; URL: https://github.com/huangfeiyu/eldoc-mouse
@@ -135,8 +135,9 @@ A leading space make the buffer hidden."
 (defvar-local eldoc-mouse--original-track-mouse nil
   "The original buffer local value of variable `track-mouse'.")
 
-(defvar-local eldoc-mouse-interested-thing-function nil
-  "The function which determines if the current thing at point is interested.")
+(defvar-local eldoc-mouse-bounds-of-thing-at-point-function nil
+  "The function which determines the bounds of the thing at the point.
+The function should return nil if nothing is interested at the point.")
 
 (defvar-local eldoc-mouse-eldoc-documentation-functions
     (list #'eldoc-mouse--eglot-eldoc-documentation-function #'eldoc-mouse--elisp-eldoc-documentation-function)
@@ -158,7 +159,7 @@ this list for specific mode.")
   "Show document at the cursor."
   (interactive)
   (eldoc-mouse--hide-posframe)
-  (when-let* ((symbol-bounds (bounds-of-thing-at-point 'symbol))
+  (when-let* ((symbol-bounds (eldoc-mouse--bounds-of-thing-at-point))
               (eldoc-documentation-functions (eldoc-mouse--eldoc-documentation-functions)))
     (setq eldoc-mouse-last-symbol-bounds symbol-bounds)
     (unless eldoc-mouse-mode
@@ -223,15 +224,13 @@ POS is the buffer position under the mouse cursor."
       (let ((eldoc-documentation-functions (eldoc-mouse--eldoc-documentation-functions)))
         (goto-char pos)
         (setq-local eldoc-mouse-last-symbol-bounds
-                    (bounds-of-thing-at-point 'symbol))
+                    (eldoc-mouse--bounds-of-thing-at-point))
         ;; Use (nth 4 (syntax-ppss)) to check if the mouse is over a code comment.
         ;; based on the answer from
         ;; https://emacs.stackexchange.com/questions/14269/14270#14270
         (when (and eldoc-mouse-last-symbol-bounds
                    (not (eolp))
-                   (not (nth 4 (syntax-ppss)))
-                   (or (null eldoc-mouse-interested-thing-function)
-                       (funcall eldoc-mouse-interested-thing-function)))
+                   (not (nth 4 (syntax-ppss))))
           (eldoc-print-current-symbol-info)
           (setq-local eldoc-mouse-mouse-overlay
                       (make-overlay
@@ -258,6 +257,12 @@ POS is the buffer position under the mouse cursor."
     (setq eldoc-mouse--mouse-timer
           (run-with-idle-timer
            eldoc-mouse-idle-time nil #'eldoc-mouse-show-doc-at pos))))
+
+(defun eldoc-mouse--bounds-of-thing-at-point ()
+  "Determine the start and end buffer locations for the THING at point."
+  (if eldoc-mouse-bounds-of-thing-at-point-function
+      (funcall eldoc-mouse-bounds-of-thing-at-point-function)
+    (bounds-of-thing-at-point 'symbol)))
 
 (defun eldoc-mouse--eglot-eldoc-documentation-function (cb)
   "Modify the `eglot-hover-eldoc-function'.
