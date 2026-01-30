@@ -3,7 +3,7 @@
 ;; Copyright (C) 2025 Huang Feiyu
 
 ;; Author: Huang Feiyu <sibadake1@163.com>
-;; Version: 3.0.2
+;; Version: 3.0.3
 ;; Package-Requires: ((emacs "27.1") (posframe "1.4.0") (eglot "1.8"))
 ;; Keywords: tools, languages, convenience, mouse, hover
 ;; URL: https://github.com/huangfeiyu/eldoc-mouse
