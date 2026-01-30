@@ -171,6 +171,10 @@ this list for specific mode.")
     (setq eldoc--last-request-state nil)
     (eldoc-print-current-symbol-info)))
 
+;; Don't restore the minor mode.
+(with-eval-after-load 'desktop
+  (add-to-list 'desktop-minor-mode-handlers '(eldoc-mouse-mode . ignore)))
+
 (defun eldoc-mouse-enable ()
   "Enable eldoc-mouse in buffers."
   ;; Enable mouse tracking.
