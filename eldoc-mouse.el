@@ -74,6 +74,11 @@
   :prefix "eldoc-mouse-"
   :group 'eldoc)
 
+(defface eldoc-mouse-border
+  '((t :inherit child-frame-border))
+  "Face for the eldoc-mouse posframe border.
+The background color of this face is used as the border color.")
+
 (defcustom eldoc-mouse-idle-time 0.4
   "The minimum amount of seconds.
 that the mouse hover on a symbol before
@@ -101,10 +106,6 @@ no limit, the popup may affect writing."
 (defcustom eldoc-mouse-posframe-border-width 1
   "The width of the posframe border."
   :type 'natnum)
-
-(defcustom eldoc-mouse-posframe-border-color (face-foreground 'default)
-  "The color of the posframe border."
-  :type 'string)
 
 (defcustom eldoc-mouse-posframe-override-parameters
   '((drag-internal-border . t))
@@ -366,7 +367,8 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
    :min-height eldoc-mouse-posframe-min-height
    :max-height eldoc-mouse-posframe-max-height
    :border-width eldoc-mouse-posframe-border-width
-   :border-color eldoc-mouse-posframe-border-color
+   :border-color (or (face-background 'eldoc-mouse-border nil t)
+                     (face-foreground 'default))
    :left-fringe eldoc-mouse-posframe-fringe-width
    :right-fringe eldoc-mouse-posframe-fringe-width
    :override-parameters eldoc-mouse-posframe-override-parameters
