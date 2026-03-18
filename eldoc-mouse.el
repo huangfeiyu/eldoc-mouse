@@ -164,9 +164,9 @@ this list for specific mode.")
   "Show document at the cursor."
   (interactive)
   (eldoc-mouse--hide-posframe)
-  (when-let* ((symbol-bounds (eldoc-mouse--bounds-of-thing-at-point))
-              (eldoc-documentation-functions (eldoc-mouse--eldoc-documentation-functions)))
-    (setq eldoc-mouse-last-symbol-bounds symbol-bounds)
+  (setq-local eldoc-mouse-last-symbol-bounds
+              (eldoc-mouse--bounds-of-thing-at-point))
+  (let ((eldoc-documentation-functions (eldoc-mouse--eldoc-documentation-functions)))
     (unless eldoc-mouse-mode
       (unless eldoc-mouse--original-display-functions
         (setq eldoc-mouse--original-display-functions eldoc-display-functions))
@@ -223,35 +223,27 @@ Support close the popup when user switch buffer."
 POS is the buffer position under the mouse cursor."
   (when (and (number-or-marker-p pos)
              (not (eldoc-mouse-is-mouse-hovering-posframe))
-             (or (null eldoc-mouse-last-symbol-bounds)
+             (or (null eldoc-mouse-mouse-overlay)
+                 (null eldoc-mouse-last-symbol-bounds)
                  (< pos (car eldoc-mouse-last-symbol-bounds))
                  (> pos (cdr eldoc-mouse-last-symbol-bounds))))
     (eldoc-mouse--hide-posframe)
-    (when eldoc-mouse-mouse-overlay
-      (delete-overlay eldoc-mouse-mouse-overlay))
     (save-excursion
       (let ((eldoc-documentation-functions (eldoc-mouse--eldoc-documentation-functions)))
         (goto-char pos)
         (setq-local eldoc-mouse-last-symbol-bounds
                     (eldoc-mouse--bounds-of-thing-at-point))
-        ;; Use (nth 4 (syntax-ppss)) to check if the mouse is over a code comment.
-        ;; based on the answer from
-        ;; https://emacs.stackexchange.com/questions/14269/14270#14270
-        (when (and eldoc-mouse-last-symbol-bounds
-                   (not (eolp))
-                   (not (nth 4 (syntax-ppss))))
-          (eldoc-print-current-symbol-info)
-          (setq-local eldoc-mouse-mouse-overlay
-                      (make-overlay
-                       (car eldoc-mouse-last-symbol-bounds)
-                       (cdr eldoc-mouse-last-symbol-bounds)))
-          (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection))))))
+        (eldoc-print-current-symbol-info)))))
 
 (defun eldoc-mouse--hide-posframe ()
   "Hide the posframe."
   (remove-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook t)
   (remove-hook 'post-command-hook #'eldoc-mouse--post-command-hook t)
   (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe)
+  (when eldoc-mouse-mouse-overlay
+    (delete-overlay eldoc-mouse-mouse-overlay)
+    (setq-local eldoc-mouse-mouse-overlay nil))
+  (setq-local eldoc-mouse-last-symbol-bounds nil)
   (posframe-hide eldoc-mouse-posframe-buffer-name))
 
 (defun eldoc-mouse-doc-on-mouse (event)
@@ -271,7 +263,7 @@ POS is the buffer position under the mouse cursor."
   "Determine the start and end buffer locations for the THING at point."
   (if eldoc-mouse-bounds-of-thing-at-point-function
       (funcall eldoc-mouse-bounds-of-thing-at-point-function)
-    (bounds-of-thing-at-point 'symbol)))
+    (bounds-of-thing-at-point 'sexp)))
 
 (defun eldoc-mouse--eglot-eldoc-documentation-function (cb)
   "Modify the `eglot-hover-eldoc-function'.
@@ -358,10 +350,18 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
   (when (and eldoc-mouse--original-display-functions (not eldoc-mouse-mode))
     (setq-local eldoc-display-functions eldoc-mouse--original-display-functions)
     (setq-local eldoc-mouse--original-display-functions nil))
+  (when eldoc-mouse-last-symbol-bounds
+    (setq-local eldoc-mouse-mouse-overlay
+                (make-overlay
+                 (car eldoc-mouse-last-symbol-bounds)
+                 (cdr eldoc-mouse-last-symbol-bounds)))
+    (overlay-put eldoc-mouse-mouse-overlay 'face 'secondary-selection))
   (posframe-show
    eldoc-mouse-posframe-buffer-name
    :initialize #'eldoc-mouse--posframe-init
-   :position (car eldoc-mouse-last-symbol-bounds)
+   :position (if eldoc-mouse-last-symbol-bounds
+                 (car eldoc-mouse-last-symbol-bounds)
+               (point))
    :poshandler #'posframe-poshandler-point-bottom-left-corner-upward
    :max-width eldoc-mouse-posframe-max-width
    :min-height eldoc-mouse-posframe-min-height
