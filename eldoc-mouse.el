@@ -240,11 +240,15 @@ POS is the buffer position under the mouse cursor."
   (remove-hook 'buffer-list-update-hook #'eldoc-mouse--change-buffer-hook t)
   (remove-hook 'post-command-hook #'eldoc-mouse--post-command-hook t)
   (advice-remove 'keyboard-quit #'eldoc-mouse--hide-posframe)
-  (when eldoc-mouse-mouse-overlay
-    (delete-overlay eldoc-mouse-mouse-overlay)
-    (setq-local eldoc-mouse-mouse-overlay nil))
+  (eldoc-mouse--delete-overlay)
   (setq-local eldoc-mouse-last-symbol-bounds nil)
   (posframe-hide eldoc-mouse-posframe-buffer-name))
+
+(defun eldoc-mouse--delete-overlay ()
+  "Delete the overlay for the symbol under the mouse."
+  (when eldoc-mouse-mouse-overlay
+    (delete-overlay eldoc-mouse-mouse-overlay)
+    (setq-local eldoc-mouse-mouse-overlay nil)))
 
 (defun eldoc-mouse-doc-on-mouse (event)
   "Show eldoc documentation when mouse hovers over EVENT."
@@ -350,6 +354,7 @@ So it won't call `eglot--highlight-piggyback` with `CB`."
   (when (and eldoc-mouse--original-display-functions (not eldoc-mouse-mode))
     (setq-local eldoc-display-functions eldoc-mouse--original-display-functions)
     (setq-local eldoc-mouse--original-display-functions nil))
+  (eldoc-mouse--delete-overlay)
   (when eldoc-mouse-last-symbol-bounds
     (setq-local eldoc-mouse-mouse-overlay
                 (make-overlay
