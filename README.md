@@ -45,6 +45,10 @@ Add the following in your Emacs configuration:
 Or if you simply want to enable mouse hover to all buffers where eldoc is available as a minor mode
 
 ``` elisp
+(use-package eldoc :ensure t)
+(use-package eglot :ensure t)
+;; if you use the eglot, elodc package from elpa, the above two lines to ensure them be loaded
+;; before loading eldoc-mouse to avoid recursive load error.
 (use-package eldoc-mouse :ensure t
   ;; replace <f1> <f1> to a key you like, "C-h ." maybe. Displaying document on a popup when you press a key.
   :bind (:map eldoc-mouse-mode-map
@@ -55,10 +59,6 @@ Or if you simply want to enable mouse hover to all buffers where eldoc is availa
 Or if you want to show document only when you press a key, and don't want to enable mouse hover, then:
 
 ``` elisp
-(use-package eldoc :ensure t)
-(use-package eglot :ensure t)
-;; if you use the eglot, elodc package from elpa, the above two lines to ensure them be loaded
-;; before loading eldoc-mouse to avoid recursive load error.
 (use-package eldoc-mouse :ensure t)
 ;; replace <f1> <f1> to a key you like.  Displaying document on a popup when you press a key.
 (global-set-key (kbd "<f1> <f1>") 'eldoc-mouse-pop-doc-at-cursor)
