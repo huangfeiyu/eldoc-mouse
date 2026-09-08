@@ -286,22 +286,16 @@ POS is the buffer position under the mouse cursor."
       (funcall eldoc-mouse-bounds-of-thing-at-point-function)
     (bounds-of-thing-at-point 'sexp)))
 
+(declare-function elisp--company-doc-buffer "elisp-mode")
 (defun eldoc-mouse--elisp-eldoc-documentation-function (_cb)
-  "The `eldoc-documentation-functions' implementation for elisp."
-  (when (eq major-mode 'emacs-lisp-mode)
-    (let ((sym (symbol-at-point)))
-      (cond
-       ;; If the symbol is a function
-       ((and sym (fboundp sym))
-        (documentation sym))
-       ;; If the symbol is a variable
-       ((and sym (boundp sym))
-        (let ((doc (documentation-property sym 'variable-documentation)))
-          (if doc
-              doc
-            nil)))
-       ;; If no symbol or not a function/variable
-       (t nil)))))
+  "The `eldoc-documentation-functions' implementation for Elisp.
+Uses `elisp--company-doc-buffer'"
+  (when (derived-mode-p 'emacs-lisp-mode 'lisp-interaction-mode 'ielm-mode)
+    (when-let* ((sym (symbol-at-point))
+                (doc-buf (let ((inhibit-message t))
+                           (elisp--company-doc-buffer (symbol-name sym)))))
+      (with-current-buffer doc-buf
+        (string-trim (buffer-string))))))
 
 (defun eldoc-mouse--hover-edloc-function-advise (orig-fn fn)
   "Wrap FN argument of ORIG-FN so that it append indentifier."
